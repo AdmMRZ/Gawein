@@ -1,6 +1,16 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000';
+const envBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+const fallbackBaseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+
+if (!envBaseUrl) {
+  console.warn(
+    'EXPO_PUBLIC_API_URL is not set. For testing on physical Android devices, set EXPO_PUBLIC_API_URL to your Railway backend URL.',
+  );
+}
+
+const BASE_URL = (envBaseUrl || fallbackBaseUrl).replace(/\/+$/, '');
 const API_URL = `${BASE_URL}/api`;
 
 const TOKEN_KEY = 'gawein_access_token';
