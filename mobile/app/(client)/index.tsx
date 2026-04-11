@@ -89,7 +89,7 @@ export default function HomeScreen() {
                 paddingHorizontal: Spacing.md,
                 height: 44,
                 gap: Spacing.sm,
-                boxShadow: Shadow.sm,
+                ...Shadow.sm,
               } as any}
             >
               <Ionicons name="search-outline" size={18} color={Colors.textMuted} />

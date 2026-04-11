@@ -1,97 +1,113 @@
 /**
- * GaweIn Design System
- * Navy + Warm Red + Mustard Gold palette
- * Clean, modern, mobile-friendly aesthetic
+ * GaweIn High-End Design System (21st.dev Inspired)
+ * Premium Matte Dark Aesthetic
+ * Clean, Elegant, Minimalist, Abyssal Contrasts
  */
 
 export const Colors = {
-  // ── Primary ────────────────────────────────────────────
-  navy: '#1B2A4A',
-  navyLight: '#2A3F6B',
-  navyDark: '#111D33',
+  // ── Primary Brand (Blue 400) ────────────────────────
+  navy: '#60A5FA',       // Primary Blue, comfortable, techy
+  navyLight: '#93C5FD',
+  navyDark: '#3B82F6',
 
-  // ── Accent: Warm Red ───────────────────────────────────
-  red: '#C44536',
-  redLight: '#E85D4A',
-  redSoft: '#F8E4E1',
+  // ── Accents & Soft Brand (Muted Indigos) ────────────
+  red: '#818CF8',        
+  redLight: '#A5B4FC',
+  redSoft: '#E0E7FF',
 
-  // ── Accent: Mustard Gold ───────────────────────────────
-  gold: '#D4A03C',
-  goldLight: '#F0C05A',
-  goldSoft: '#FDF3E0',
+  // ── Secondary Soft (Soft Cyan/Sky) ──────────────────
+  gold: '#7DD3FC',       
+  goldLight: '#BAE6FD',
+  goldSoft: '#E0F2FE',
 
-  // ── Neutral ────────────────────────────────────────────
-  cream: '#FAF8F5',
-  white: '#FFFFFF',
-  grayLight: '#E8E6E3',
-  grayMed: '#9B9896',
-  grayDark: '#4A4745',
+  // ── Background / Neutral (Dark Mode Base) ───────────
+  cream: '#0B1426',      // Background utama (Midnight Slate)
+  // Core / Brand
+  primary: '#6366F1',     // Indigo 500
+  secondary: '#38BDF8',   // Light Blue Accent
+  navy: '#6366F1',        // Aliased for legacy references
+  
+  // Neutral / Background
+  slate900: '#1E293B',    // Surface Dark (Replacing Cards)
+  white: '#1E293B',       // Component Background (Surface in Dark Mode)
+  cream: '#0F172A',       // Base Main Background
+  grayLight: '#334155',   // Borders / Shadows
+  grayMed: '#475569',
+  grayDark: '#94A3B8',
 
-  // ── Text ────────────────────────────────────────────────
-  textPrimary: '#1A1816',
-  textSecondary: '#6B6764',
-  textMuted: '#9B9896',
-  textInverse: '#FFFFFF',
-
-  // ── Semantic ────────────────────────────────────────────
-  success: '#2D8F5C',
-  successSoft: '#E3F5EC',
-  warning: '#D4A03C',
-  warningSoft: '#FDF3E0',
-  error: '#C44536',
-  errorSoft: '#F8E4E1',
-  info: '#2A3F6B',
-  infoSoft: '#E3EAF5',
-
-  // ── Status ──────────────────────────────────────────────
-  statusPending: '#D4A03C',
-  statusConfirmed: '#2D8F5C',
-  statusInProgress: '#2A3F6B',
-  statusCompleted: '#2D8F5C',
-  statusCancelled: '#9B9896',
-  statusRejected: '#C44536',
+  // Typography
+  textPrimary: '#F8FAFC',
+  textSecondary: '#E2E8F0',
+  textMuted: '#94A3B8',
+  
+  // Status / Feedback
+  success: '#10B981',
+  successSoft: '#064E3B', 
+  warning: '#F59E0B',
+  warningSoft: '#78350F',
+  error: '#EF4444',
+  errorSoft: '#7F1D1D',
+  info: '#3B82F6',
+  infoSoft: '#1E3A8A', 
 };
 
 export const Spacing = {
   xs: 4,
   sm: 8,
-  md: 12,
-  lg: 16,
-  xl: 20,
-  xxl: 24,
-  xxxl: 32,
-  section: 40,
-} as const;
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+  section: 64,
+};
 
 export const Radius = {
   sm: 8,
   md: 12,
   lg: 16,
   xl: 20,
-  pill: 999,
-} as const;
+  pill: 999, // Super rounded items
+};
 
 export const FontSize = {
-  xs: 11,
-  sm: 13,
-  md: 15,
-  lg: 17,
+  xs: 12,
+  sm: 14,
+  md: 16,
+  lg: 18,
   xl: 20,
   xxl: 24,
-  display: 28,
-  hero: 34,
-} as const;
+  display: 32,
+};
 
 export const FontWeight = {
   regular: '400' as const,
   medium: '500' as const,
   semibold: '600' as const,
   bold: '700' as const,
+  extrabold: '800' as const,
 };
 
+// Adapted to matte dark mode
 export const Shadow = {
-  sm: '0 1px 3px rgba(27, 42, 74, 0.06)',
-  md: '0 4px 12px rgba(27, 42, 74, 0.08)',
-  lg: '0 8px 24px rgba(27, 42, 74, 0.10)',
-  card: '0 2px 8px rgba(27, 42, 74, 0.06)',
-} as const;
+  sm: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  md: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  card: {
+    shadowColor: '#000', // Harder shadow for dark mode
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+};

@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useCallback } from 'react';
 import { getAccessToken, clearTokens } from '@/services/api';
-import { authService } from '@/services/auth';
+import { authService, type RegisterData } from '@/services/auth';
 import { userService } from '@/services/user';
 import type { User, UserRole } from '@/types';
 
@@ -12,7 +12,7 @@ interface AuthState {
 
 interface AuthContextValue extends AuthState {
   login: (email: string, password: string) => Promise<void>;
-  register: (data: Record<string, unknown>) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -60,8 +60,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  const register = useCallback(async (data: Record<string, unknown>) => {
-    const result = await authService.register(data as any);
+  const register = useCallback(async (data: RegisterData) => {
+    const result = await authService.register(data);
     setState({
       user: result.user,
       isLoading: false,

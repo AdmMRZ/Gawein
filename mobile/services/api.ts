@@ -1,20 +1,41 @@
 import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const envBaseUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
-const fallbackBaseUrl = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+
+function getExpoHostBaseUrl(): string | null {
+  const hostUri =
+    Constants.expoConfig?.hostUri
+    ?? (Constants as any).manifest2?.extra?.expoClient?.hostUri
+    ?? (Constants as any).manifest?.debuggerHost
+    ?? '';
+
+  if (!hostUri) return null;
+
+  const host = hostUri.split(':')[0]?.trim();
+  if (!host) return null;
+
+  return `http://${host}:8000`;
+}
+
+const platformFallbackBaseUrl =
+  Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+const expoHostBaseUrl = getExpoHostBaseUrl();
 
 if (!envBaseUrl) {
   console.warn(
-    'EXPO_PUBLIC_API_URL is not set. For testing on physical Android devices, set EXPO_PUBLIC_API_URL to your Railway backend URL.',
+    `EXPO_PUBLIC_API_URL is not set. Using detected fallback: ${expoHostBaseUrl || platformFallbackBaseUrl}`,
   );
 }
 
-const BASE_URL = (envBaseUrl || fallbackBaseUrl).replace(/\/+$/, '');
+const BASE_URL = (envBaseUrl || expoHostBaseUrl || platformFallbackBaseUrl).replace(/\/+$/, '');
 const API_URL = `${BASE_URL}/api`;
 
 const TOKEN_KEY = 'gawein_access_token';
 const REFRESH_KEY = 'gawein_refresh_token';
+
+export const API_BASE_URL = BASE_URL;
 
 // ── Token Management ───────────────────────────────────────
 
@@ -43,11 +64,28 @@ export class ApiError extends Error {
   data: Record<string, unknown>;
 
   constructor(status: number, data: Record<string, unknown>) {
-    const message = (data?.detail as string) || `Request failed with status ${status}`;
+    let message = (data?.detail as string) || `Request failed with status ${status}`;
+    if (typeof message === 'string' && (message.trim().toLowerCase().startsWith('<!doctype html>') || message.trim().toLowerCase().startsWith('<html'))) {
+      message = `Server Error HTTP ${status}: Terjadi masalah pada server.`;
+    }
+    
     super(message);
     this.status = status;
     this.data = data;
     this.name = 'ApiError';
+  }
+}
+
+export class NetworkError extends Error {
+  url: string;
+
+  constructor(url: string, cause?: unknown) {
+    super(`Tidak dapat terhubung ke server (${url}). Pastikan Django berjalan dan bisa diakses dari device Expo.`);
+    this.name = 'NetworkError';
+    this.url = url;
+    if (cause) {
+      (this as Error & { cause?: unknown }).cause = cause;
+    }
   }
 }
 
@@ -101,17 +139,36 @@ export async function api<T = unknown>(
     config.body = JSON.stringify(body);
   }
 
-  const response = await fetch(url, config);
+  let response: Response;
+
+  try {
+    response = await fetch(url, config);
+  } catch (error) {
+    throw new NetworkError(url, error);
+  }
 
   // Handle no-content responses
   if (response.status === 204) {
     return undefined as T;
   }
 
-  const data = await response.json();
+  const rawText = await response.text();
+  let data: unknown = {};
+
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch {
+      data = { detail: rawText };
+    }
+  }
 
   if (!response.ok) {
-    throw new ApiError(response.status, data);
+    const errorData =
+      typeof data === 'object' && data !== null
+        ? (data as Record<string, unknown>)
+        : { detail: String(data) };
+    throw new ApiError(response.status, errorData);
   }
 
   return data as T;

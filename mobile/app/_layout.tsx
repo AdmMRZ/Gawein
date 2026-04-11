@@ -54,7 +54,7 @@ function RootNavigation() {
             headerShown: true,
             title: 'Detail Penyedia',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
           }}
         />
@@ -64,7 +64,7 @@ function RootNavigation() {
             headerShown: true,
             title: 'Booking',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
           }}
         />
@@ -74,7 +74,7 @@ function RootNavigation() {
             headerShown: true,
             title: 'Detail Hiring',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
           }}
         />
@@ -84,7 +84,7 @@ function RootNavigation() {
             headerShown: true,
             title: 'Detail Riwayat',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
           }}
         />
@@ -94,7 +94,7 @@ function RootNavigation() {
             headerShown: true,
             title: 'Tulis Review',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
             presentation: 'modal',
           }}
@@ -105,7 +105,7 @@ function RootNavigation() {
             headerShown: true,
             title: 'Buat Layanan Baru',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
           }}
         />
@@ -115,12 +115,12 @@ function RootNavigation() {
             headerShown: true,
             title: 'Edit Layanan',
             headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.navy,
+            headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
           }}
         />
       </Stack>
-      <StatusBar style="dark" />
+      <StatusBar style="light" />
     </>
   );
 }

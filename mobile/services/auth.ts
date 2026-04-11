@@ -1,7 +1,7 @@
 import { api, setTokens, clearTokens, getRefreshToken } from './api';
 import type { AuthResponse } from '@/types';
 
-interface RegisterData {
+export interface RegisterData {
   email: string;
   username: string;
   password: string;
@@ -17,7 +17,7 @@ interface RegisterData {
   years_of_experience?: number;
 }
 
-interface LoginData {
+export interface LoginData {
   email: string;
   password: string;
 }

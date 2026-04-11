@@ -3,8 +3,6 @@ import { Pressable, Text, ActivityIndicator, View } from 'react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -20,11 +18,11 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: Colors.navy, text: Colors.textInverse },
-  secondary: { bg: Colors.red, text: Colors.textInverse },
-  outline: { bg: 'transparent', text: Colors.navy, border: Colors.navy },
+  primary: { bg: Colors.navy, text: Colors.textPrimary },
+  secondary: { bg: Colors.red, text: Colors.textPrimary },
+  outline: { bg: 'transparent', text: Colors.textPrimary, border: Colors.navyLight },
   ghost: { bg: 'transparent', text: Colors.textSecondary },
-  danger: { bg: Colors.error, text: Colors.textInverse },
+  danger: { bg: Colors.error, text: Colors.textPrimary },
 };
 
 const sizeStyles: Record<ButtonSize, { h: number; px: number; fontSize: number }> = {
@@ -44,55 +42,70 @@ export function Button({
   fullWidth = false,
 }: ButtonProps) {
   const scale = useSharedValue(1);
+  const opacity = useSharedValue(1);
   const v = variantStyles[variant];
   const s = sizeStyles[size];
 
   const animStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
+    opacity: opacity.value,
   }));
 
   return (
-    <AnimatedPressable
+    <Pressable
       onPress={onPress}
-      onPressIn={() => { scale.value = withSpring(0.97, { damping: 20, stiffness: 300 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 20, stiffness: 300 }); }}
+      onPressIn={() => {
+        scale.value = withSpring(0.98, { damping: 20, stiffness: 300 });
+        opacity.value = withSpring(0.8, { damping: 20, stiffness: 300 });
+      }}
+      onPressOut={() => {
+        scale.value = withSpring(1, { damping: 20, stiffness: 400 });
+        opacity.value = withSpring(1, { damping: 20, stiffness: 400 });
+      }}
       disabled={disabled || loading}
-      style={[
-        animStyle,
-        {
-          height: s.h,
-          paddingHorizontal: s.px,
-          backgroundColor: disabled ? Colors.grayLight : v.bg,
-          borderRadius: Radius.md,
-          borderCurve: 'continuous' as const,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: Spacing.sm,
-          borderWidth: v.border ? 1.5 : 0,
-          borderColor: v.border || 'transparent',
-          opacity: disabled ? 0.5 : 1,
-          alignSelf: fullWidth ? 'stretch' : 'auto',
-        } as any,
-      ]}
+      style={{ alignSelf: fullWidth ? 'stretch' : 'auto' }}
     >
-      {loading ? (
-        <ActivityIndicator size="small" color={v.text} />
-      ) : (
-        <>
-          {icon}
-          <Text
-            style={{
-              fontSize: s.fontSize,
-              fontWeight: FontWeight.semibold,
-              color: disabled ? Colors.grayMed : v.text,
-              letterSpacing: -0.2,
-            }}
-          >
-            {title}
-          </Text>
-        </>
-      )}
-    </AnimatedPressable>
+      <Animated.View
+        style={[
+          animStyle,
+          {
+            height: s.h,
+            paddingHorizontal: s.px,
+            backgroundColor: disabled ? Colors.grayLight : v.bg,
+            borderRadius: Radius.xl, // Pill-like curvy buttons
+            borderCurve: 'continuous' as const,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: Spacing.sm,
+            borderWidth: v.border ? 1.5 : 0,
+            borderColor: v.border || 'transparent',
+            shadowColor: variant === 'primary' && !disabled ? Colors.navy : 'transparent',
+            shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.4, // Higher opacity for neon glow
+            shadowRadius: 16,
+            elevation: variant === 'primary' && !disabled ? 8 : 0,
+          } as any,
+        ]}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color={disabled ? Colors.grayMed : v.text} />
+        ) : (
+          <>
+            {icon}
+            <Text
+              style={{
+                fontSize: s.fontSize,
+                fontWeight: FontWeight.bold, // Bolder button text!
+                color: disabled ? Colors.grayMed : v.text,
+                letterSpacing: 0.2, // Spread out a bit for modern feeling
+              }}
+            >
+              {title}
+            </Text>
+          </>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }

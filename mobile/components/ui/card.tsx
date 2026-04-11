@@ -18,7 +18,7 @@ export function Card({ children, onPress, style, padding = Spacing.lg }: CardPro
           borderRadius: Radius.lg,
           borderCurve: 'continuous' as const,
           padding,
-          boxShadow: Shadow.card,
+          ...Shadow.card,
         } as any,
         style,
       ]}
