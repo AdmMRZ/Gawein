@@ -34,7 +34,10 @@ class HiringListCreateView(APIView):
                 status=status.HTTP_403_FORBIDDEN,
             )
         serializer = HiringCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            print("HIRING VALIDATION ERROR:", serializer.errors)
+            serializer.is_valid(raise_exception=True)
+            
         hiring = HiringService.create_hiring(
             request.user, serializer.validated_data,
         )

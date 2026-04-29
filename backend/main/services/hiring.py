@@ -24,9 +24,9 @@ class HiringService:
         if booking.client != user:
             raise PermissionDenied("You can only hire from your own bookings.")
 
-        if booking.status != 'confirmed':
+        if booking.status not in ['pending', 'confirmed']:
             raise ValidationError(
-                "Hiring can only be created from a confirmed booking."
+                "Hiring can only be created from a pending or confirmed booking."
             )
 
         # Check if hiring already exists for this booking
