@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
 import { ApiError, API_BASE_URL, NetworkError } from '@/services/api';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   buildRegisterPayload,
   extractApiErrorMessage,
@@ -18,7 +14,8 @@ import {
   validateRegisterForm,
 } from '@/utils/auth-validation';
 
-type SelectedRole = 'client' | 'provider';
+const BLUE = '#3F5FDF';
+const BORDER = '#D8D8D8';
 
 const initialFormValues: RegisterFormValues = {
   role: 'client',
@@ -33,88 +30,74 @@ const initialFormValues: RegisterFormValues = {
   bio: '',
 };
 
-const registerFields: RegisterFieldName[] = [
-  'role',
-  'email',
-  'username',
-  'firstName',
-  'lastName',
-  'password',
-  'passwordConfirm',
-  'phone',
-  'location',
-  'bio',
-];
-
-const allRegisterTouched = registerFields.reduce((acc, key) => ({
-  ...acc,
-  [key]: true,
-}), {} as Partial<Record<RegisterFieldName, boolean>>);
+const allRegisterTouched: Partial<Record<RegisterFieldName, boolean>> = {
+  role: true,
+  email: true,
+  username: true,
+  firstName: true,
+  lastName: true,
+  password: true,
+  passwordConfirm: true,
+};
 
 export default function RegisterScreen() {
   const { register } = useAuth();
-  const insets = useSafeAreaInsets();
   const [form, setForm] = useState<RegisterFormValues>(initialFormValues);
   const [touched, setTouched] = useState<Partial<Record<RegisterFieldName, boolean>>>({});
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<RegisterFieldName, string>>>({});
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (field: RegisterFieldName, value: string | SelectedRole) => {
-    const nextForm = {
-      ...form,
-      [field]: value,
-    } as RegisterFormValues;
+  const fullName = [form.firstName, form.lastName].filter(Boolean).join(' ');
 
+  const buildNameState = (value: string) => {
+    const parts = value.trim().split(/\s+/).filter(Boolean);
+    const baseUsername = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 24);
+    return {
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ') || parts[0] || '',
+      username: baseUsername ? `${baseUsername}${baseUsername.length < 4 ? '_1234'.slice(0, 4 - baseUsername.length) : ''}` : '',
+    };
+  };
+
+  const handleNameChange = (value: string) => {
+    const nextForm = { ...form, ...buildNameState(value), role: 'client' as const };
     setForm(nextForm);
     if (submitError) setSubmitError('');
+    if (touched.firstName || touched.username) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
+  };
 
-    if (touched[field]) {
-      const validationErrors = validateRegisterForm(nextForm);
-      setFieldErrors(getTouchedFieldErrors(validationErrors, touched));
-    }
+  const handleChange = (field: RegisterFieldName, value: string) => {
+    const nextForm = { ...form, [field]: value } as RegisterFormValues;
+    setForm(nextForm);
+    if (submitError) setSubmitError('');
+    if (touched[field]) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
   };
 
   const handleBlurField = (field: RegisterFieldName) => {
-    const nextTouched = {
-      ...touched,
-      [field]: true,
-    };
-
+    const nextTouched = { ...touched, [field]: true };
     setTouched(nextTouched);
-    const validationErrors = validateRegisterForm(form);
-    setFieldErrors(getTouchedFieldErrors(validationErrors, nextTouched));
+    setFieldErrors(getTouchedFieldErrors(validateRegisterForm(form), nextTouched));
   };
 
   const handleRegister = async () => {
     const validationErrors = validateRegisterForm(form);
     setTouched(allRegisterTouched);
-
     if (hasErrors(validationErrors)) {
       setFieldErrors(getTouchedFieldErrors(validationErrors, allRegisterTouched));
       return;
     }
 
-    setFieldErrors({});
     setSubmitError('');
     setLoading(true);
-
     try {
       await register(buildRegisterPayload(form));
     } catch (e) {
       if (e instanceof NetworkError) {
         setSubmitError(`${e.message} Endpoint saat ini: ${API_BASE_URL}/api`);
-        return;
-      }
-
-      if (e instanceof ApiError) {
+      } else if (e instanceof ApiError) {
         const mappedErrors = mapRegisterApiErrors(e.data);
-        if (hasErrors(mappedErrors)) {
-          setFieldErrors((prev) => ({
-            ...prev,
-            ...mappedErrors,
-          }));
-        }
+        if (hasErrors(mappedErrors)) setFieldErrors((prev) => ({ ...prev, ...mappedErrors }));
         setSubmitError(extractApiErrorMessage(e.data, e.message));
       } else {
         setSubmitError('Gagal mendaftar. Periksa koneksi lalu coba lagi.');
@@ -125,303 +108,127 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={{ flex: 1, backgroundColor: Colors.cream }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#FFFFFF' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+        overScrollMode="never"
+        style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+        contentContainerStyle={{ alignItems: 'center', minHeight: 860, paddingBottom: 18 }}
+      >
+        <View style={{ width: '100%', maxWidth: 430, minHeight: 860, backgroundColor: '#FFFFFF' }}>
+          <View style={{ height: 292, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 20 }}>
+            <Image source={require('../../assets/images/Gambar_Pekerja.png')} style={{ width: '100%', height: 230, resizeMode: 'contain' }} />
+          </View>
 
-        <ScrollView
-          contentContainerStyle={{
-            paddingHorizontal: Spacing.xxl,
-            paddingTop: insets.top + Spacing.xxl,
-            paddingBottom: Math.max(insets.bottom + Spacing.xxl, Spacing.section),
-            gap: Spacing.xl,
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
           <View
             style={{
-              width: '100%',
-              maxWidth: 620,
-              alignSelf: 'center',
-              gap: Spacing.lg,
+              minHeight: 610,
+              marginTop: -45,
+              backgroundColor: '#FFFFFF',
+              borderTopLeftRadius: 46,
+              borderTopRightRadius: 46,
+              paddingHorizontal: 31,
+              paddingTop: 39,
             }}
           >
-            <View style={{ gap: Spacing.sm }}>
-              <Text
-                style={{
-                  fontSize: FontSize.display,
-                  color: Colors.navy,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.8,
-                }}
-              >
-                Buat Akun GaweIn
-              </Text>
-              <Text
-                style={{
-                  fontSize: FontSize.md,
-                  color: Colors.textSecondary,
-                  lineHeight: 22,
-                  maxWidth: 500,
-                }}
-              >
-                Lengkapi data profil agar proses booking dan komunikasi berjalan lebih cepat.
-              </Text>
-            </View>
+            <Text style={{ color: '#050505', fontSize: 40, lineHeight: 48, fontWeight: '900', textAlign: 'center', marginBottom: 28 }}>
+              Sign Up
+            </Text>
 
-            <View
-              style={{
-                backgroundColor: Colors.white,
-                borderRadius: Radius.xl,
-                borderCurve: 'continuous' as const,
-                borderWidth: 1,
-                borderColor: Colors.grayLight,
-                padding: Spacing.xxl,
-                gap: Spacing.xl,
-                shadowColor: Colors.navy,
-                shadowOpacity: 0.05,
-                shadowRadius: 40,
-                shadowOffset: { width: 0, height: 20 },
-                elevation: 4,
-              }}
-            >
-              <View style={{ gap: Spacing.sm }}>
-                <Text
-                  style={{
-                    fontSize: FontSize.sm,
-                    fontWeight: FontWeight.medium,
-                    color: Colors.textSecondary,
-                  }}
-                >
-                  Daftar sebagai
-                </Text>
-                <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
-                  {(['client', 'provider'] as SelectedRole[]).map((roleOption) => (
-                    <Pressable
-                      key={roleOption}
-                      onPress={() => handleChange('role', roleOption)}
-                      style={{
-                        flex: 1,
-                        height: 48,
-                        borderRadius: Radius.md,
-                        borderCurve: 'continuous' as const,
-                        borderWidth: 1.5,
-                        borderColor: form.role === roleOption ? Colors.navy : Colors.grayLight,
-                        backgroundColor: form.role === roleOption ? Colors.navy : Colors.white,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      } as any}
-                    >
-                      <Text
-                        style={{
-                          fontSize: FontSize.md,
-                          fontWeight: FontWeight.semibold,
-                          color:
-                            form.role === roleOption
-                              ? Colors.textInverse
-                              : Colors.textSecondary,
-                        }}
-                      >
-                        {roleOption === 'client' ? 'Pencari Jasa' : 'Penyedia Jasa'}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
+            <AuthField
+              label="Nama"
+              placeholder="Masukkan Nama Lengkap"
+              value={fullName}
+              error={fieldErrors.firstName || fieldErrors.lastName || fieldErrors.username}
+              onChangeText={handleNameChange}
+              onBlur={() => handleBlurField('firstName')}
+            />
+            <AuthField
+              label="Email"
+              placeholder="Masukkan Email"
+              value={form.email}
+              error={fieldErrors.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onChangeText={(value) => handleChange('email', value)}
+              onBlur={() => handleBlurField('email')}
+            />
+            <AuthField
+              label="Password"
+              placeholder="Masukkan Password"
+              value={form.password}
+              error={fieldErrors.password}
+              secureTextEntry
+              onChangeText={(value) => handleChange('password', value)}
+              onBlur={() => handleBlurField('password')}
+            />
+            <AuthField
+              label="Confirm Password"
+              placeholder="Masukkan Password"
+              value={form.passwordConfirm}
+              error={fieldErrors.passwordConfirm}
+              secureTextEntry
+              onChangeText={(value) => handleChange('passwordConfirm', value)}
+              onBlur={() => handleBlurField('passwordConfirm')}
+            />
 
-              <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-                <View style={{ flex: 1 }}>
-                  <Input
-                    label="Nama Depan"
-                    value={form.firstName}
-                    onChangeText={(value) => handleChange('firstName', value)}
-                    onBlur={() => handleBlurField('firstName')}
-                    placeholder="Nama depan"
-                    error={fieldErrors.firstName}
-                  />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Input
-                    label="Nama Belakang"
-                    value={form.lastName}
-                    onChangeText={(value) => handleChange('lastName', value)}
-                    onBlur={() => handleBlurField('lastName')}
-                    placeholder="Nama belakang"
-                    error={fieldErrors.lastName}
-                  />
-                </View>
-              </View>
+            {submitError ? <Text style={{ color: '#D62828', fontSize: 12, marginBottom: 10 }}>{submitError}</Text> : null}
 
-              <Input
-                label="Username"
-                value={form.username}
-                onChangeText={(value) => handleChange('username', value)}
-                onBlur={() => handleBlurField('username')}
-                placeholder="username_anda"
-                autoCapitalize="none"
-                error={fieldErrors.username}
-                helper={fieldErrors.username ? undefined : 'Gunakan 4-30 karakter.'}
-              />
-
-              <Input
-                label="Email"
-                value={form.email}
-                onChangeText={(value) => handleChange('email', value)}
-                onBlur={() => handleBlurField('email')}
-                placeholder="nama@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                error={fieldErrors.email}
-              />
-
-              <Input
-                label="No. Telepon"
-                value={form.phone}
-                onChangeText={(value) => handleChange('phone', value)}
-                onBlur={() => handleBlurField('phone')}
-                placeholder="08xxxxxxxxxx"
-                keyboardType="phone-pad"
-                error={fieldErrors.phone}
-                helper={fieldErrors.phone ? undefined : 'Opsional, 9-15 digit.'}
-              />
-
-              <Input
-                label="Lokasi"
-                value={form.location}
-                onChangeText={(value) => handleChange('location', value)}
-                onBlur={() => handleBlurField('location')}
-                placeholder="Kota atau daerah"
-                error={fieldErrors.location}
-              />
-
-              {form.role === 'provider' ? (
-                <Input
-                  label="Bio / Deskripsi"
-                  value={form.bio}
-                  onChangeText={(value) => handleChange('bio', value)}
-                  onBlur={() => handleBlurField('bio')}
-                  placeholder="Ceritakan keahlian dan pengalaman Anda"
-                  multiline
-                  numberOfLines={4}
-                  error={fieldErrors.bio}
-                  helper={fieldErrors.bio ? undefined : 'Minimal 20 karakter.'}
-                  style={{
-                    height: 112,
-                    textAlignVertical: 'top',
-                    paddingTop: 12,
-                  }}
-                />
-              ) : null}
-
-              <Input
-                label="Password"
-                value={form.password}
-                onChangeText={(value) => handleChange('password', value)}
-                onBlur={() => handleBlurField('password')}
-                placeholder="Minimal 8 karakter"
-                secureTextEntry
-                autoComplete="password"
-                error={fieldErrors.password}
-                helper={fieldErrors.password ? undefined : 'Harus mengandung huruf dan angka.'}
-              />
-
-              <Input
-                label="Konfirmasi Password"
-                value={form.passwordConfirm}
-                onChangeText={(value) => handleChange('passwordConfirm', value)}
-                onBlur={() => handleBlurField('passwordConfirm')}
-                placeholder="Ulangi password"
-                secureTextEntry
-                autoComplete="password"
-                error={fieldErrors.passwordConfirm}
-              />
-
-              {submitError ? (
-                <View
-                  style={{
-                    backgroundColor: Colors.errorSoft,
-                    borderColor: Colors.redLight,
-                    borderWidth: 1,
-                    borderRadius: Radius.md,
-                    paddingHorizontal: Spacing.md,
-                    paddingVertical: Spacing.sm,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: FontSize.sm,
-                      color: Colors.error,
-                      lineHeight: 20,
-                    }}
-                    selectable
-                  >
-                    {submitError}
-                  </Text>
-                </View>
-              ) : null}
-
-              <Button
-                title="Buat Akun"
-                onPress={handleRegister}
-                loading={loading}
-                disabled={loading}
-                fullWidth
-                size="lg"
-                variant="secondary"
-              />
-
-              <Text
-                style={{
-                  fontSize: FontSize.sm,
-                  color: Colors.textMuted,
-                  lineHeight: 20,
-                }}
-              >
-                Data profil bisa dilengkapi lagi setelah proses pendaftaran selesai.
-              </Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
+            <Pressable
+              onPress={handleRegister}
+              disabled={loading}
+              style={({ pressed }) => ({
+                height: 64,
+                borderRadius: 16,
+                backgroundColor: BLUE,
+                alignItems: 'center',
                 justifyContent: 'center',
-                gap: Spacing.xs,
-              }}
+                marginTop: 14,
+                opacity: pressed || loading ? 0.75 : 1,
+              })}
             >
-              <Text style={{ fontSize: FontSize.md, color: Colors.textMuted }}>
-                Sudah punya akun?
-              </Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '800' }}>{loading ? 'Memproses...' : 'Sign Up'}</Text>
+            </Pressable>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 31 }}>
+              <Text style={{ color: '#222222', fontSize: 16 }}>Sudah memiliki akun?</Text>
               <Link href="/(auth)/login" asChild>
                 <Pressable>
-                  <Text
-                    style={{
-                      fontSize: FontSize.md,
-                      color: Colors.red,
-                      fontWeight: FontWeight.semibold,
-                    }}
-                  >
-                    Masuk
-                  </Text>
+                  <Text style={{ color: BLUE, fontSize: 16, fontWeight: '900' }}>Log in</Text>
                 </Pressable>
               </Link>
             </View>
-
-            {__DEV__ ? (
-              <Text
-                style={{
-                  fontSize: FontSize.xs,
-                  color: Colors.textMuted,
-                  textAlign: 'center',
-                }}
-              >
-              </Text>
-            ) : null}
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function AuthField(props: React.ComponentProps<typeof TextInput> & { label: string; error?: string }) {
+  const { label, error, style, ...inputProps } = props;
+  return (
+    <View style={{ marginBottom: 17 }}>
+      <Text style={{ color: '#111111', fontSize: 15, fontWeight: '900', marginBottom: 9 }}>{label}</Text>
+      <TextInput
+        {...inputProps}
+        placeholderTextColor="#BDBDBD"
+        style={[
+          {
+            height: 54,
+            borderRadius: 18,
+            borderWidth: 1.5,
+            borderColor: error ? '#D62828' : BORDER,
+            paddingHorizontal: 18,
+            color: '#111111',
+            fontSize: 16,
+            backgroundColor: '#FFFFFF',
+          },
+          style,
+        ]}
+      />
+      {error ? <Text style={{ color: '#D62828', fontSize: 11, marginTop: 5 }}>{error}</Text> : null}
+    </View>
   );
 }
