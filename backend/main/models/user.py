@@ -11,6 +11,7 @@ class User(AbstractUser):
         PROVIDER = 'provider', 'Provider'
 
     email = models.EmailField(unique=True)
+    gender = models.CharField(max_length=20, blank=True, default='')
     role = models.CharField(
         max_length=20,
         choices=Role.choices,
@@ -61,6 +62,31 @@ class ClientProfile(models.Model):
 
     def __str__(self):
         return f"ClientProfile: {self.user.email}"
+
+
+class PaymentCard(models.Model):
+    """Payment card details owned by a user."""
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='payment_cards',
+    )
+    card_number = models.CharField(max_length=19)
+    expiry_date = models.CharField(max_length=7)
+    cvv = models.CharField(max_length=4)
+    cardholder_name = models.CharField(max_length=150)
+    billing_address = models.CharField(max_length=255)
+    is_primary = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'payment_cards'
+        ordering = ['-is_primary', '-created_at']
+
+    def __str__(self):
+        return f"PaymentCard: {self.user.email} ****{self.card_number[-4:]}"
 
 
 class ProviderProfile(models.Model):

@@ -1,7 +1,7 @@
 from django.urls import path
 
 from main.views.auth import RegisterView, LoginView, LogoutView, ChangePasswordView
-from main.views.user import ProfileView
+from main.views.user import ProfileView, PaymentCardListCreateView, PaymentCardDetailView
 from main.views.catalog import CategoryListCreateView, CategoryDetailView
 from main.views.provider import (
     ProviderListView,
@@ -38,6 +38,8 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('payment-cards/', PaymentCardListCreateView.as_view(), name='payment-card-list-create'),
+    path('payment-cards/<int:pk>/', PaymentCardDetailView.as_view(), name='payment-card-detail'),
 
     # ── Category ────────────────────────────────────────────
     path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
