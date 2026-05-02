@@ -1,6 +1,8 @@
 import React from 'react';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator, Image, Text } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing } from '@/constants/theme';
+
+const BLUE = '#315BE8';
 
 interface LoadingScreenProps {
   message?: string;
@@ -11,17 +13,21 @@ export function LoadingScreen({ message = 'Memuat...' }: LoadingScreenProps) {
     <View
       style={{
         flex: 1,
-        backgroundColor: Colors.cream,
+        backgroundColor: '#FFFFFF',
         alignItems: 'center',
         justifyContent: 'center',
         gap: Spacing.md,
       }}
     >
-      <ActivityIndicator size="large" color={Colors.navy} />
+      <Image
+        source={require('../../assets/images/landing_logo.png')}
+        style={{ width: 120, height: 120, resizeMode: 'contain' }}
+      />
+      <ActivityIndicator size="small" color={BLUE} />
       <Text
         style={{
           fontSize: FontSize.sm,
-          color: Colors.textMuted,
+          color: BLUE,
           fontWeight: FontWeight.medium,
         }}
       >

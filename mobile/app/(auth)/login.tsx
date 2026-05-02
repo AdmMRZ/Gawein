@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, KeyboardAvoidingView, Pressable, Platform } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Link } from 'expo-router';
 import { useAuth } from '@/hooks/use-auth';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
 import { ApiError, API_BASE_URL, NetworkError } from '@/services/api';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   extractApiErrorMessage,
   getTouchedFieldErrors,
@@ -17,19 +13,14 @@ import {
   validateLoginForm,
 } from '@/utils/auth-validation';
 
-const initialFormValues: LoginFormValues = {
-  email: '',
-  password: '',
-};
+const BLUE = '#3F5FDF';
+const BORDER = '#D8D8D8';
 
-const allLoginTouched: Partial<Record<LoginFieldName, boolean>> = {
-  email: true,
-  password: true,
-};
+const initialFormValues: LoginFormValues = { email: '', password: '' };
+const allLoginTouched: Partial<Record<LoginFieldName, boolean>> = { email: true, password: true };
 
 export default function LoginScreen() {
   const { login } = useAuth();
-  const insets = useSafeAreaInsets();
   const [form, setForm] = useState<LoginFormValues>(initialFormValues);
   const [touched, setTouched] = useState<Partial<Record<LoginFieldName, boolean>>>({});
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<LoginFieldName, string>>>({});
@@ -37,35 +28,21 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleChange = (field: LoginFieldName, value: string) => {
-    const nextForm = {
-      ...form,
-      [field]: value,
-    };
-
+    const nextForm = { ...form, [field]: value };
     setForm(nextForm);
     if (submitError) setSubmitError('');
-
-    if (touched[field]) {
-      const validationErrors = validateLoginForm(nextForm);
-      setFieldErrors(getTouchedFieldErrors(validationErrors, touched));
-    }
+    if (touched[field]) setFieldErrors(getTouchedFieldErrors(validateLoginForm(nextForm), touched));
   };
 
   const handleBlurField = (field: LoginFieldName) => {
-    const nextTouched = {
-      ...touched,
-      [field]: true,
-    };
-
+    const nextTouched = { ...touched, [field]: true };
     setTouched(nextTouched);
-    const validationErrors = validateLoginForm(form);
-    setFieldErrors(getTouchedFieldErrors(validationErrors, nextTouched));
+    setFieldErrors(getTouchedFieldErrors(validateLoginForm(form), nextTouched));
   };
 
   const handleLogin = async () => {
     const validationErrors = validateLoginForm(form);
     setTouched(allLoginTouched);
-
     if (hasErrors(validationErrors)) {
       setFieldErrors(getTouchedFieldErrors(validationErrors, allLoginTouched));
       return;
@@ -74,20 +51,14 @@ export default function LoginScreen() {
     setFieldErrors({});
     setSubmitError('');
     setLoading(true);
-
     try {
       await login(form.email.trim().toLowerCase(), form.password);
     } catch (e) {
       if (e instanceof NetworkError) {
         setSubmitError(`${e.message} Endpoint saat ini: ${API_BASE_URL}/api`);
-        return;
-      }
-
-      if (e instanceof ApiError) {
+      } else if (e instanceof ApiError) {
         const mappedErrors = mapLoginApiErrors(e.data);
-        if (hasErrors(mappedErrors)) {
-          setFieldErrors(mappedErrors);
-        }
+        if (hasErrors(mappedErrors)) setFieldErrors(mappedErrors);
         setSubmitError(extractApiErrorMessage(e.data, e.message));
       } else {
         setSubmitError('Gagal masuk. Periksa koneksi lalu coba lagi.');
@@ -98,176 +69,110 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={{ flex: 1, backgroundColor: Colors.cream }}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: '#FFFFFF' }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        bounces={false}
+        overScrollMode="never"
+        style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+        contentContainerStyle={{ alignItems: 'center', minHeight: 820, paddingBottom: 18 }}
+      >
+        <View style={{ width: '100%', maxWidth: 430, minHeight: 820, backgroundColor: '#FFFFFF' }}>
+          <View style={{ height: 322, backgroundColor: BLUE, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 20 }}>
+            <Image source={require('../../assets/images/Gambar_Pekerja.png')} style={{ width: '100%', height: 260, resizeMode: 'contain' }} />
+          </View>
 
-        <ScrollView
-          contentContainerStyle={{
-            flexGrow: 1,
-            justifyContent: 'center',
-            paddingHorizontal: Spacing.xxl,
-            paddingTop: insets.top + Spacing.xxl,
-            paddingBottom: Math.max(insets.bottom + Spacing.xxl, Spacing.section),
-          }}
-          keyboardShouldPersistTaps="handled"
-        >
           <View
             style={{
-              width: '100%',
-              maxWidth: 560,
-              alignSelf: 'center',
-              gap: Spacing.xl,
+              minHeight: 498,
+              marginTop: -45,
+              backgroundColor: '#FFFFFF',
+              borderTopLeftRadius: 46,
+              borderTopRightRadius: 46,
+              paddingHorizontal: 31,
+              paddingTop: 50,
             }}
           >
-            <View style={{ gap: Spacing.sm }}>
-              <Text
-                style={{
-                  fontSize: FontSize.display,
-                  color: Colors.navy,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: -0.8,
-                }}
-              >
-                Masuk ke GaweIn
-              </Text>
-              <Text
-                style={{
-                  fontSize: FontSize.md,
-                  color: Colors.textSecondary,
-                  lineHeight: 22,
-                  maxWidth: 420,
-                }}
-              >
-                Cari, booking, dan pantau layanan profesional dalam satu aplikasi.
-              </Text>
-            </View>
+            <Text style={{ color: '#050505', fontSize: 40, lineHeight: 48, fontWeight: '900', textAlign: 'center', marginBottom: 50 }}>
+              Login
+            </Text>
 
-            <View
-              style={{
-                backgroundColor: Colors.white,
-                borderRadius: Radius.xl,
-                borderCurve: 'continuous' as const,
-                borderWidth: 1,
-                borderColor: Colors.grayLight,
-                padding: Spacing.xxl,
-                gap: Spacing.xl,
-                shadowColor: Colors.navy,
-                shadowOpacity: 0.05,
-                shadowRadius: 40,
-                shadowOffset: { width: 0, height: 20 },
-                elevation: 4,
-              }}
-            >
-              <Input
-                label="Email"
-                value={form.email}
-                onChangeText={(value) => handleChange('email', value)}
-                onBlur={() => handleBlurField('email')}
-                placeholder="nama@email.com"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                error={fieldErrors.email}
-                helper={fieldErrors.email ? undefined : 'Gunakan email yang terdaftar.'}
-              />
+            <AuthField
+              label="Email"
+              placeholder="Masukkan Email"
+              value={form.email}
+              error={fieldErrors.email}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              onChangeText={(value) => handleChange('email', value)}
+              onBlur={() => handleBlurField('email')}
+            />
+            <AuthField
+              label="Password"
+              placeholder="Masukkan Password"
+              value={form.password}
+              error={fieldErrors.password}
+              secureTextEntry
+              onChangeText={(value) => handleChange('password', value)}
+              onBlur={() => handleBlurField('password')}
+            />
 
-              <Input
-                label="Password"
-                value={form.password}
-                onChangeText={(value) => handleChange('password', value)}
-                onBlur={() => handleBlurField('password')}
-                placeholder="Masukkan password"
-                secureTextEntry
-                autoComplete="password"
-                error={fieldErrors.password}
-                helper={fieldErrors.password ? undefined : 'Minimal 8 karakter.'}
-              />
+            {submitError ? <Text style={{ color: '#D62828', fontSize: 12, marginBottom: 10 }}>{submitError}</Text> : null}
 
-              {submitError ? (
-                <View
-                  style={{
-                    backgroundColor: Colors.errorSoft,
-                    borderColor: Colors.redLight,
-                    borderWidth: 1,
-                    borderRadius: Radius.md,
-                    paddingHorizontal: Spacing.md,
-                    paddingVertical: Spacing.sm,
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontSize: FontSize.sm,
-                      color: Colors.error,
-                      lineHeight: 20,
-                    }}
-                    selectable
-                  >
-                    {submitError}
-                  </Text>
-                </View>
-              ) : null}
-
-              <Button
-                title="Masuk"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
-                fullWidth
-                size="lg"
-              />
-
-              <Text
-                style={{
-                  fontSize: FontSize.sm,
-                  color: Colors.textMuted,
-                  lineHeight: 20,
-                }}
-              >
-                Pastikan backend Django aktif sebelum login.
-              </Text>
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
+            <Pressable
+              onPress={handleLogin}
+              disabled={loading}
+              style={({ pressed }) => ({
+                height: 64,
+                borderRadius: 16,
+                backgroundColor: BLUE,
+                alignItems: 'center',
                 justifyContent: 'center',
-                gap: Spacing.xs,
-              }}
+                marginTop: 16,
+                opacity: pressed || loading ? 0.75 : 1,
+              })}
             >
-              <Text style={{ fontSize: FontSize.md, color: Colors.textMuted }}>
-                Belum punya akun?
-              </Text>
+              <Text style={{ color: '#FFFFFF', fontSize: 22, fontWeight: '800' }}>{loading ? 'Memproses...' : 'Login'}</Text>
+            </Pressable>
+
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 42 }}>
+              <Text style={{ color: '#222222', fontSize: 16 }}>Belum punya akun?</Text>
               <Link href="/(auth)/register" asChild>
                 <Pressable>
-                  <Text
-                    style={{
-                      fontSize: FontSize.md,
-                      color: Colors.red,
-                      fontWeight: FontWeight.semibold,
-                    }}
-                  >
-                    Daftar sekarang
-                  </Text>
+                  <Text style={{ color: BLUE, fontSize: 16, fontWeight: '900' }}>Sign up</Text>
                 </Pressable>
               </Link>
             </View>
-
-            {__DEV__ ? (
-              <Text
-                style={{
-                  fontSize: FontSize.xs,
-                  color: Colors.textMuted,
-                  textAlign: 'center',
-                }}
-              >
-              </Text>
-            ) : null}
           </View>
-        </ScrollView>
-      </View>
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+function AuthField(props: React.ComponentProps<typeof TextInput> & { label: string; error?: string }) {
+  const { label, error, style, ...inputProps } = props;
+  return (
+    <View style={{ marginBottom: 23 }}>
+      <Text style={{ color: '#111111', fontSize: 15, fontWeight: '900', marginBottom: 9 }}>{label}</Text>
+      <TextInput
+        {...inputProps}
+        placeholderTextColor="#BDBDBD"
+        style={[
+          {
+            height: 54,
+            borderRadius: 18,
+            borderWidth: 1.5,
+            borderColor: error ? '#D62828' : BORDER,
+            paddingHorizontal: 18,
+            color: '#111111',
+            fontSize: 16,
+            backgroundColor: '#FFFFFF',
+          },
+          style,
+        ]}
+      />
+      {error ? <Text style={{ color: '#D62828', fontSize: 11, marginTop: 5 }}>{error}</Text> : null}
+    </View>
   );
 }

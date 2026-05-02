@@ -8,7 +8,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Colors } from '@/constants/theme';
 
 function RootNavigation() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
@@ -20,18 +20,18 @@ function RootNavigation() {
     if (!isAuthenticated && !inAuth) {
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuth) {
-      // Route based on role
-      if (user?.role === 'provider') {
-        router.replace('/(provider)');
-      } else if (user?.role === 'admin') {
-        router.replace('/(admin)');
-      } else {
-        router.replace('/(client)');
-      }
+      router.replace('/(client)');
+    } else if (isAuthenticated && segments[0] === '(provider)') {
+      router.replace('/(client)');
     }
-  }, [isAuthenticated, isLoading, segments, user]);
+  }, [isAuthenticated, isLoading, router, segments]);
 
   if (isLoading) {
+    return <LoadingScreen message="Menyiapkan GaweIn..." />;
+  }
+
+  const inAuth = segments[0] === '(auth)';
+  if (!isAuthenticated && !inAuth) {
     return <LoadingScreen message="Menyiapkan GaweIn..." />;
   }
 
