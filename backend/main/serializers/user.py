@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from main.models import User, ClientProfile, ProviderProfile
+from main.models import User, ClientProfile, ProviderProfile, PaymentCard
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -10,7 +10,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'email', 'username', 'first_name', 'last_name',
-            'role', 'is_active', 'is_verified', 'created_at', 'updated_at',
+            'gender', 'role', 'is_active', 'is_verified', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
 
@@ -80,3 +80,43 @@ class ProfileSerializer(serializers.Serializer):
             if profile:
                 return ProviderProfileSerializer(profile).data
         return None
+
+
+class PaymentCardSerializer(serializers.ModelSerializer):
+    """Payment card read/write serializer."""
+
+    class Meta:
+        model = PaymentCard
+        fields = [
+            'id', 'card_number', 'expiry_date', 'cvv', 'cardholder_name',
+            'billing_address', 'is_primary', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'is_primary', 'created_at', 'updated_at']
+
+    def validate_card_number(self, value):
+        digits = ''.join(ch for ch in value if ch.isdigit())
+        if len(digits) < 12 or len(digits) > 19:
+            raise serializers.ValidationError('Card number must contain 12-19 digits.')
+        return digits
+
+    def validate_expiry_date(self, value):
+        raw_value = value.strip()
+        digits = ''.join(ch for ch in raw_value if ch.isdigit())
+        if len(digits) == 6:
+            value = f'{digits[:2]}/{digits[2:]}'
+        elif len(digits) == 4:
+            value = f'{digits[:2]}/20{digits[2:]}'
+        else:
+            value = raw_value
+
+        if len(value) != 7 or value[2] != '/' or not value[:2].isdigit() or not value[3:].isdigit():
+            raise serializers.ValidationError('Expiry date must use MM/YYYY format.')
+        month = int(value[:2])
+        if month < 1 or month > 12:
+            raise serializers.ValidationError('Expiry month must be between 01 and 12.')
+        return value
+
+    def validate_cvv(self, value):
+        if not value.isdigit() or len(value) not in (3, 4):
+            raise serializers.ValidationError('CVV must contain 3 or 4 digits.')
+        return value

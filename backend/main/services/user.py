@@ -42,6 +42,7 @@ class UserService:
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'gender': user.gender,
                 'role': user.role,
                 'is_active': user.is_active,
                 'is_verified': user.is_verified,
@@ -55,7 +56,7 @@ class UserService:
     def update_profile(user, data: dict) -> dict:
         """Update user info and role-specific profile."""
         # Update user fields
-        user_fields = ['first_name', 'last_name', 'username']
+        user_fields = ['first_name', 'last_name', 'username', 'gender']
         user_updated = False
         for field in user_fields:
             if field in data:

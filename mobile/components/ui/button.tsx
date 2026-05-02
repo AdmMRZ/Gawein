@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, ActivityIndicator, View } from 'react-native';
+import { Pressable, Text, ActivityIndicator, View, ViewStyle, StyleProp } from 'react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -15,6 +15,7 @@ interface ButtonProps {
   disabled?: boolean;
   icon?: React.ReactNode;
   fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 const variantStyles: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
@@ -40,6 +41,7 @@ export function Button({
   disabled = false,
   icon,
   fullWidth = false,
+  style,
 }: ButtonProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -86,6 +88,7 @@ export function Button({
             shadowRadius: 16,
             elevation: variant === 'primary' && !disabled ? 8 : 0,
           } as any,
+          style,
         ]}
       >
         {loading ? (
