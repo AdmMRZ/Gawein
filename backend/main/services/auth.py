@@ -27,6 +27,7 @@ class AuthService:
             role=role,
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
+            gender=validated_data.get('gender', ''),
         )
 
         # Create role-specific profile
@@ -56,6 +57,7 @@ class AuthService:
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'gender': user.gender,
                 'role': user.role,
             },
             'tokens': {
@@ -85,6 +87,7 @@ class AuthService:
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'gender': user.gender,
                 'role': user.role,
             },
             'tokens': {
