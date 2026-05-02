@@ -61,11 +61,28 @@ function RootNavigation() {
         <Stack.Screen
           name="booking/[id]"
           options={{
-            headerShown: true,
-            title: 'Booking',
+            headerShown: false,
+            title: 'Detail Pesanan',
             headerBackButtonDisplayMode: 'minimal',
             headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
+          }}
+        />
+        <Stack.Screen
+          name="booking/payment"
+          options={{
+            headerShown: false,
+            title: 'Pembayaran',
+            headerBackButtonDisplayMode: 'minimal',
+            headerTintColor: Colors.textPrimary,
+            headerStyle: { backgroundColor: Colors.cream },
+          }}
+        />
+        <Stack.Screen
+          name="booking/success"
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
           }}
         />
         <Stack.Screen
