@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from main.models import User, ClientProfile, ProviderProfile, PaymentCard
+from main.models import User, ClientProfile, ProviderProfile, PaymentCard, ProviderRegistration
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -120,3 +120,9 @@ class PaymentCardSerializer(serializers.ModelSerializer):
         if not value.isdigit() or len(value) not in (3, 4):
             raise serializers.ValidationError('CVV must contain 3 or 4 digits.')
         return value
+
+class ProviderRegistrationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProviderRegistration
+        fields = '__all__'
+        read_only_fields = ['user', 'created_at', 'updated_at']

@@ -1,4 +1,4 @@
-from main.models.user import User, ClientProfile, ProviderProfile, PaymentCard
+from main.models.user import User, ClientProfile, ProviderProfile, PaymentCard, ProviderRegistration
 from main.models.catalog import Province, City, Category, Service
 from main.models.scheduling import Availability, Booking
 from main.models.transaction import HiringTransaction, Review, IdempotencyKey
@@ -8,6 +8,7 @@ __all__ = [
     'User',
     'ClientProfile',
     'ProviderProfile',
+    'ProviderRegistration',
     'PaymentCard',
     'Province',
     'City',
