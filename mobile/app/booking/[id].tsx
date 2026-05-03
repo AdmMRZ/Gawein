@@ -367,6 +367,10 @@ export default function BookingScheduleScreen() {
 
   const handleConfirmed = () => {
     setShowConfirm(false);
+    const startDateStr = `${calYear}-${pad(calMonth + 1)}-${pad(selectedStart!)}`;
+    const endDateStr = selectedEnd
+      ? `${calYear}-${pad(calMonth + 1)}-${pad(selectedEnd)}`
+      : '';
     router.push({
       pathname: '/booking/payment',
       params: {
@@ -375,8 +379,13 @@ export default function BookingScheduleScreen() {
         providerName,
         categoryName: roleName,
         price: service?.price ?? '0',
-        workDate: `${calYear}-${pad(calMonth + 1)}-${pad(selectedStart!)}`,
-        startTime: `${pad(startTime.hour)}:${pad(startTime.minute)}`,
+        mode,                                               // 'harian' | 'rentang'
+        workDate: startDateStr,
+        endDate: endDateStr,
+        startTime: `${pad(startTime.hour)}:${pad(startTime.minute)} ${startTime.ampm}`,
+        endTime: mode === 'rentang' && endDateStr
+          ? `${pad(endTime.hour)}:${pad(endTime.minute)} ${endTime.ampm}`
+          : '',
         location: '',
       },
     });

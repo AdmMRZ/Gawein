@@ -176,4 +176,13 @@ class SchedulingService:
                 booking.availability, is_available=True,
             )
 
+        # Cascade status update to the associated HiringTransaction if it exists
+        if hasattr(booking, 'hiring_transaction') and booking.hiring_transaction:
+            from main.repositories.transaction import TransactionRepository
+            # if booking is completed, also complete the hiring transaction
+            if new_status == 'completed' and booking.hiring_transaction.status != 'completed':
+                TransactionRepository.update_hiring_status(booking.hiring_transaction, 'completed')
+            elif new_status == 'confirmed' and booking.hiring_transaction.status == 'pending':
+                TransactionRepository.update_hiring_status(booking.hiring_transaction, 'confirmed')
+
         return SchedulingRepository.update_booking_status(booking, new_status)

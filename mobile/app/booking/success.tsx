@@ -1,7 +1,19 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, Platform, Animated, Easing } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Platform,
+  Animated,
+  Easing,
+} from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { FontWeight } from '@/constants/theme';
+
+// ── Constants ──────────────────────────────────────────────
+const BLUE = '#315BE8';
+const GOLD = '#FFD45A';
 
 // ── Confetti Particle ──────────────────────────────────────
 function ConfettiParticle({
@@ -9,34 +21,41 @@ function ConfettiParticle({
   color,
   delay,
   size,
+  shape,
 }: {
   x: number;
   color: string;
   delay: number;
   size: number;
+  shape: 'circle' | 'rect';
 }) {
   const translateY = useRef(new Animated.Value(-20)).current;
   const translateX = useRef(new Animated.Value(0)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const rotate = useRef(new Animated.Value(0)).current;
+  const opacity    = useRef(new Animated.Value(0)).current;
+  const rotate     = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const drift = (Math.random() - 0.5) * 60;
+    const drift = (Math.random() - 0.5) * 80;
     Animated.sequence([
       Animated.delay(delay),
       Animated.parallel([
-        Animated.timing(translateY, { toValue: 200, duration: 1600, useNativeDriver: true, easing: Easing.out(Easing.quad) }),
-        Animated.timing(translateX, { toValue: drift, duration: 1600, useNativeDriver: true }),
+        Animated.timing(translateY, {
+          toValue: 220,
+          duration: 1800,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.quad),
+        }),
+        Animated.timing(translateX, { toValue: drift, duration: 1800, useNativeDriver: true }),
         Animated.sequence([
           Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
-          Animated.timing(opacity, { toValue: 0, duration: 400, delay: 900, useNativeDriver: true }),
+          Animated.timing(opacity, { toValue: 0, duration: 500, delay: 900, useNativeDriver: true }),
         ]),
-        Animated.timing(rotate, { toValue: 1, duration: 1600, useNativeDriver: true }),
+        Animated.timing(rotate, { toValue: 1, duration: 1800, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);
 
-  const spin = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '540deg'] });
+  const spin = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '720deg'] });
 
   return (
     <Animated.View
@@ -45,9 +64,9 @@ function ConfettiParticle({
         left: x,
         top: 0,
         width: size,
-        height: size,
+        height: shape === 'rect' ? size * 0.5 : size,
         backgroundColor: color,
-        borderRadius: Math.random() > 0.5 ? size / 2 : 2,
+        borderRadius: shape === 'circle' ? size / 2 : 2,
         transform: [{ translateY }, { translateX }, { rotate: spin }],
         opacity,
       }}
@@ -56,22 +75,46 @@ function ConfettiParticle({
 }
 
 // ── Confetti Burst ─────────────────────────────────────────
-const CONFETTI_COLORS = ['#F59E0B', '#6366F1', '#10B981', '#EF4444', '#38BDF8', '#EC4899', '#FCD34D'];
+const CONFETTI_COLORS = [
+  '#FFD45A', '#315BE8', '#10B981', '#EF4444',
+  '#38BDF8', '#EC4899', '#F59E0B', '#A78BFA',
+];
 
-function ConfettiBurst({ width = 300 }: { width?: number }) {
-  const particles = Array.from({ length: 30 }, (_, i) => ({
+function ConfettiBurst({ width = 320 }: { width?: number }) {
+  const particles = Array.from({ length: 40 }, (_, i) => ({
     id: i,
     x: Math.random() * width,
     color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-    delay: Math.random() * 600,
-    size: 6 + Math.random() * 8,
+    delay: Math.random() * 700,
+    size: 6 + Math.random() * 9,
+    shape: (Math.random() > 0.5 ? 'circle' : 'rect') as 'circle' | 'rect',
   }));
 
   return (
-    <View style={{ width, height: 200, position: 'absolute', top: 0, overflow: 'hidden' }} pointerEvents="none">
+    <View
+      style={{ width, height: 220, position: 'absolute', top: 0, overflow: 'hidden' }}
+      pointerEvents="none"
+    >
       {particles.map((p) => (
-        <ConfettiParticle key={p.id} x={p.x} color={p.color} delay={p.delay} size={p.size} />
+        <ConfettiParticle
+          key={p.id}
+          x={p.x}
+          color={p.color}
+          delay={p.delay}
+          size={p.size}
+          shape={p.shape}
+        />
       ))}
+    </View>
+  );
+}
+
+// ── Info Row ───────────────────────────────────────────────
+function InfoRow({ icon, text }: { icon: string; text: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10 }}>
+      <Ionicons name={icon as any} size={18} color={BLUE} style={{ marginTop: 1 }} />
+      <Text style={{ flex: 1, fontSize: 13, color: '#555', lineHeight: 20 }}>{text}</Text>
     </View>
   );
 }
@@ -81,130 +124,161 @@ export default function BookingSuccessScreen() {
   const { hiringId } = useLocalSearchParams<{ hiringId: string }>();
   const router = useRouter();
 
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.7)).current;
+  const fadeAnim  = useRef(new Animated.Value(0)).current;
+  const emojiAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.delay(200),
+      Animated.delay(150),
       Animated.parallel([
         Animated.spring(scaleAnim, {
           toValue: 1,
-          damping: 12,
-          stiffness: 100,
+          damping: 10,
+          stiffness: 90,
           useNativeDriver: true,
         }),
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 400,
+          duration: 350,
           useNativeDriver: true,
         }),
       ]),
+      Animated.spring(emojiAnim, {
+        toValue: 1,
+        damping: 8,
+        stiffness: 120,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
-  const handleDone = () => {
-    router.replace('/(client)');
-  };
-
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cream }}>
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Content */}
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl }}>
+      {/* ── Blue Header ── */}
+      <View style={{
+        backgroundColor: BLUE,
+        paddingTop: Platform.OS === 'ios' ? 56 : 40,
+        paddingBottom: 24,
+        paddingHorizontal: 20,
+        alignItems: 'center',
+      }}>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: FontWeight.bold }}>
+          Rekrut
+        </Text>
+      </View>
 
-        {/* Confetti Effect */}
-        <View style={{ position: 'absolute', top: '15%', alignSelf: 'center' }}>
-          <ConfettiBurst width={320} />
+      {/* ── Content ── */}
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+
+        {/* Confetti floats above the card */}
+        <View style={{ position: 'absolute', top: '5%', alignSelf: 'center' }}>
+          <ConfettiBurst width={340} />
         </View>
 
         {/* Animated Card */}
         <Animated.View
           style={{
             width: '100%',
-            backgroundColor: Colors.slate900,
-            borderRadius: Radius.xl * 1.5,
-            padding: Spacing.xl,
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            padding: 28,
             alignItems: 'center',
-            gap: Spacing.lg,
-            borderWidth: 1, borderColor: Colors.grayLight,
+            gap: 16,
+            borderWidth: 1,
+            borderColor: '#E5E7EB',
             transform: [{ scale: scaleAnim }],
             opacity: fadeAnim,
-            shadowColor: Colors.primary,
-            shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.3,
-            shadowRadius: 20,
-            elevation: 12,
+            shadowColor: BLUE,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.12,
+            shadowRadius: 16,
+            elevation: 8,
           }}
         >
-          {/* Icon */}
-          <View style={{
-            width: 100, height: 100,
-            borderRadius: 50,
-            backgroundColor: Colors.successSoft,
-            justifyContent: 'center', alignItems: 'center',
-          }}>
+          {/* Emoji Icon */}
+          <Animated.View
+            style={{
+              width: 96,
+              height: 96,
+              borderRadius: 48,
+              backgroundColor: '#EFF6FF',
+              justifyContent: 'center',
+              alignItems: 'center',
+              transform: [{ scale: emojiAnim }],
+            }}
+          >
             <Text style={{ fontSize: 52 }}>🎉</Text>
-          </View>
+          </Animated.View>
 
           {/* Title */}
           <Text style={{
-            fontSize: FontSize.xl,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.textPrimary,
+            color: '#111',
             textAlign: 'center',
             lineHeight: 28,
           }}>
-            Selamat! Proses rekrut penyedia jasa Anda telah berhasil.
+            Permintaan Jasa{'\n'}Berhasil Dikirim!
           </Text>
 
-          {/* Description */}
-          <Text style={{
-            fontSize: FontSize.sm,
-            color: Colors.textSecondary,
-            textAlign: 'center',
-            lineHeight: 22,
-          }}>
-            Terima kasih telah mempercayakan kebutuhan layanan Anda kepada Gawein. Kami berharap dapat membantu Anda dalam rekrutmen selanjutnya.
-          </Text>
+          {/* Divider */}
+          <View style={{ width: '100%', height: 1, backgroundColor: '#F0F0F0' }} />
 
-          {/* Hiring ID chip */}
-          {hiringId && (
+          {/* Info rows */}
+          <View style={{ width: '100%', gap: 10 }}>
+            <InfoRow
+              icon="checkmark-circle-outline"
+              text="Terima kasih! Permintaan rekrutmu telah diterima oleh sistem Gawein."
+            />
+            <InfoRow
+              icon="time-outline"
+              text="Tunggu konfirmasi dari provider. Mereka akan segera merespons pesananmu."
+            />
+            <InfoRow
+              icon="chatbubble-ellipses-outline"
+              text="Pantau status pesanan melalui menu Pesanan atau riwayat di halaman Akun."
+            />
+          </View>
+
+          {/* Order ID chip */}
+          {!!hiringId && (
             <View style={{
-              backgroundColor: Colors.primary + '20',
-              borderRadius: Radius.pill,
-              paddingHorizontal: Spacing.md,
+              backgroundColor: BLUE + '15',
+              borderRadius: 999,
+              paddingHorizontal: 16,
               paddingVertical: 6,
-              borderWidth: 1, borderColor: Colors.primary + '40',
+              borderWidth: 1,
+              borderColor: BLUE + '30',
             }}>
-              <Text style={{ fontSize: FontSize.xs, color: Colors.primary, fontWeight: FontWeight.semibold }}>
+              <Text style={{ fontSize: 12, color: BLUE, fontWeight: FontWeight.semibold }}>
                 ID Pesanan #{hiringId}
               </Text>
             </View>
           )}
 
-          {/* CTA Button */}
+          {/* Primary CTA */}
           <Pressable
-            onPress={handleDone}
+            onPress={() => router.replace('/(client)')}
             style={({ pressed }) => ({
               width: '100%',
-              backgroundColor: Colors.warning,
-              borderRadius: Radius.xl,
+              backgroundColor: GOLD,
+              borderRadius: 40,
               paddingVertical: 16,
               alignItems: 'center',
               opacity: pressed ? 0.85 : 1,
-              marginTop: Spacing.sm,
             })}
           >
-            <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#1a1a1a' }}>
-              Selesai
+            <Text style={{ fontSize: 16, fontWeight: FontWeight.bold, color: '#111' }}>
+              Kembali ke Beranda
             </Text>
           </Pressable>
 
-          {/* View History Link */}
-          <Pressable onPress={() => router.replace('/(client)/history')}>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.medium }}>
+          {/* Secondary link */}
+          <Pressable onPress={() => router.replace('/(client)/history' as any)}>
+            <Text style={{ fontSize: 13, color: BLUE, fontWeight: FontWeight.medium }}>
               Lihat Riwayat Pesanan →
             </Text>
           </Pressable>

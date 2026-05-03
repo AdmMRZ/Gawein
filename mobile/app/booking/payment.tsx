@@ -13,21 +13,41 @@ import { Ionicons } from '@expo/vector-icons';
 import { schedulingService } from '@/services/scheduling';
 import { hiringService } from '@/services/hiring';
 import { ApiError, generateIdempotencyKey } from '@/services/api';
-import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
+import { FontWeight } from '@/constants/theme';
 
-// ── Format Rupiah ──────────────────────────────────────────
-const formatRupiah = (value: string | number) => {
-  const num = typeof value === 'number' ? value : parseInt(String(value).replace(/\D/g, ''), 10);
-  if (isNaN(num)) return 'Rp 0';
-  return `Rp ${num.toLocaleString('id-ID')}`;
-};
-
-// ── Payment Method Item ────────────────────────────────────
-const TRANSPORT_FEE = 50000;
-const PLATFORM_FEE = 5000;
+// ── Constants ──────────────────────────────────────────────
+const BLUE   = '#315BE8';
+const GOLD   = '#FFD45A';
+const TRANSPORT_FEE = 50_000;
+const PLATFORM_FEE  =  5_000;
 
 type PaymentMethod = 'card' | 'ewallet';
 
+// ── Rupiah formatter ───────────────────────────────────────
+function fmtRp(value: string | number) {
+  // Use parseFloat so "300000.00" → 300000, not 30000000
+  const num = typeof value === 'number' ? value : parseFloat(String(value)) || 0;
+  if (isNaN(num)) return 'Rp0';
+  return `Rp${Math.round(num).toLocaleString('id-ID')}`;
+}
+
+// How many days between two YYYY-MM-DD strings (inclusive)
+function daysBetween(startStr: string, endStr: string): number {
+  if (!startStr || !endStr) return 1;
+  const ms = new Date(endStr).getTime() - new Date(startStr).getTime();
+  if (isNaN(ms) || ms < 0) return 1;
+  return Math.round(ms / 86_400_000) + 1; // +1 to count both start & end day
+}
+
+// ── Date formatter ─────────────────────────────────────────
+function fmtDate(dateStr: string) {
+  if (!dateStr) return '-';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ── Payment Option Row ─────────────────────────────────────
 function PaymentOption({
   selected,
   value,
@@ -45,20 +65,21 @@ function PaymentOption({
     <Pressable
       onPress={() => onSelect(value)}
       style={({ pressed }) => ({
-        flexDirection: 'row', alignItems: 'center',
-        backgroundColor: selected ? 'rgba(99,102,241,0.08)' : Colors.slate900,
-        borderRadius: Radius.xl,
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 12,
         borderWidth: 1.5,
-        borderColor: selected ? Colors.primary : Colors.grayLight,
-        padding: Spacing.md,
-        gap: Spacing.md,
-        marginBottom: Spacing.sm,
+        borderColor: selected ? BLUE : '#E5E7EB',
+        padding: 14,
+        gap: 12,
+        marginBottom: 10,
         opacity: pressed ? 0.8 : 1,
       })}
     >
-      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+      <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         {icons}
-        <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.medium, color: Colors.textPrimary }}>
+        <Text style={{ fontSize: 14, fontWeight: FontWeight.medium, color: '#111' }}>
           {label}
         </Text>
       </View>
@@ -66,11 +87,11 @@ function PaymentOption({
       <View style={{
         width: 22, height: 22, borderRadius: 11,
         borderWidth: 2,
-        borderColor: selected ? Colors.primary : Colors.grayMed,
+        borderColor: selected ? BLUE : '#D1D5DB',
         justifyContent: 'center', alignItems: 'center',
       }}>
         {selected && (
-          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary }} />
+          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: BLUE }} />
         )}
       </View>
     </Pressable>
@@ -80,22 +101,126 @@ function PaymentOption({
 // ── Transaction Row ────────────────────────────────────────
 function TransactionRow({ label, amount, bold = false }: { label: string; amount: number; bold?: boolean }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 }}>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 5 }}>
       <Text style={{
-        fontSize: bold ? FontSize.md : FontSize.sm,
+        fontSize: bold ? 15 : 13,
         fontWeight: bold ? FontWeight.bold : FontWeight.regular,
-        color: bold ? Colors.textPrimary : Colors.textSecondary,
+        color: bold ? '#111' : '#555',
       }}>
         {label}
       </Text>
       <Text style={{
-        fontSize: bold ? FontSize.md : FontSize.sm,
+        fontSize: bold ? 15 : 13,
         fontWeight: bold ? FontWeight.bold : FontWeight.semibold,
-        color: bold ? Colors.textPrimary : Colors.textSecondary,
+        color: bold ? '#111' : '#555',
       }}>
-        {formatRupiah(amount)}
+        {fmtRp(amount)}
       </Text>
     </View>
+  );
+}
+
+// ── Card icons ─────────────────────────────────────────────
+function CardIcons() {
+  return (
+    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+      {/* Mastercard */}
+      <View style={{ width: 32, height: 20, borderRadius: 4, backgroundColor: '#EB001B', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+        <View style={{ width: 14, height: 14, borderRadius: 7, backgroundColor: '#FF5F00', position: 'absolute', left: 9 }} />
+      </View>
+      {/* Visa */}
+      <View style={{ width: 36, height: 20, borderRadius: 4, backgroundColor: '#1A1F71', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 8, fontWeight: FontWeight.bold, color: '#fff', fontStyle: 'italic' }}>VISA</Text>
+      </View>
+    </View>
+  );
+}
+
+function EWalletIcons() {
+  return (
+    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
+      {/* OVO */}
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#4B2FBF', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 6, fontWeight: FontWeight.bold, color: '#fff' }}>OVO</Text>
+      </View>
+      {/* GoPay */}
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#00AA13', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 6, fontWeight: FontWeight.bold, color: '#fff' }}>Go</Text>
+      </View>
+      {/* ShopeePay */}
+      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#EE4D2D', justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={{ fontSize: 5, fontWeight: FontWeight.bold, color: '#fff' }}>SPay</Text>
+      </View>
+    </View>
+  );
+}
+
+// ── Confirmation Modal ─────────────────────────────────────
+function ConfirmModal({
+  visible,
+  loading,
+  onConfirm,
+  onCancel,
+}: {
+  visible: boolean;
+  loading: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <Pressable
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', justifyContent: 'center', alignItems: 'center', padding: 28 }}
+        onPress={onCancel}
+      >
+        <Pressable
+          onPress={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            padding: 28,
+            width: '100%',
+            alignItems: 'center',
+            gap: 14,
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: FontWeight.bold, color: '#111', textAlign: 'center' }}>
+            Apakah kamu yakin ingin merekrut?
+          </Text>
+          <Text style={{ fontSize: 13, color: '#777', textAlign: 'center', lineHeight: 20 }}>
+            Pastikan metode pembayaran sudah benar sebelum melanjutkan proses
+          </Text>
+
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%', marginTop: 4 }}>
+            <Pressable
+              onPress={onCancel}
+              style={({ pressed }) => ({
+                flex: 1, paddingVertical: 14, borderRadius: 12,
+                borderWidth: 1.5, borderColor: '#D1D5DB',
+                alignItems: 'center', opacity: pressed ? 0.7 : 1,
+              })}
+            >
+              <Text style={{ fontSize: 15, fontWeight: FontWeight.semibold, color: '#555' }}>Batalkan</Text>
+            </Pressable>
+            <Pressable
+              onPress={onConfirm}
+              disabled={loading}
+              style={({ pressed }) => ({
+                flex: 1, paddingVertical: 14, borderRadius: 12,
+                backgroundColor: GOLD,
+                alignItems: 'center', opacity: pressed || loading ? 0.85 : 1,
+              })}
+            >
+              {loading ? (
+                <ActivityIndicator size="small" color="#111" />
+              ) : (
+                <Text style={{ fontSize: 15, fontWeight: FontWeight.bold, color: '#111' }}>Rekrut</Text>
+              )}
+            </Pressable>
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 }
 
@@ -107,127 +232,168 @@ export default function PaymentScreen() {
     providerName: string;
     categoryName: string;
     price: string;
-    workDate: string;
-    startTime: string;
+    mode: string;           // 'harian' | 'rentang'
+    workDate: string;       // start date YYYY-MM-DD
+    endDate: string;        // end date YYYY-MM-DD (empty if harian)
+    startTime: string;      // e.g. "10:00 AM"
+    endTime: string;        // e.g. "05:00 PM" (empty if harian)
     location: string;
   }>();
   const router = useRouter();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [showConfirm, setShowConfirm]     = useState(false);
+  const [loading, setLoading]             = useState(false);
+  const [error, setError]                 = useState('');
 
-  const servicePrice = parseInt(String(params.price ?? '0').replace(/\D/g, ''), 10) || 0;
-  const total = servicePrice + TRANSPORT_FEE + PLATFORM_FEE;
+  // Base price per day (parseFloat handles "300000.00" correctly)
+  const basePricePerDay = Math.round(parseFloat(String(params.price ?? '0')) || 0);
+
+  const isRentang = params.mode === 'rentang' && !!params.endDate;
+
+  // For rentang: multiply by number of days; for harian: 1 day
+  const numDays     = isRentang ? daysBetween(params.workDate ?? '', params.endDate ?? '') : 1;
+  const servicePrice = basePricePerDay * numDays;
+  const total        = servicePrice + TRANSPORT_FEE + PLATFORM_FEE;
+
+  const dateDisplay = isRentang
+    ? `${fmtDate(params.workDate)} – ${fmtDate(params.endDate)}`
+    : fmtDate(params.workDate ?? '');
+
+  const timeDisplay = isRentang && params.endTime
+    ? `${params.startTime} – ${params.endTime}`
+    : (params.startTime ?? '-');
 
   const handleSubmit = async () => {
-    setShowConfirmModal(false);
     setLoading(true);
     setError('');
-
-    // Generate unique session key for this recruitment attempt
     const sessionKey = generateIdempotencyKey();
-
     try {
-      // Step 1: Create booking (links service)
+      // Step 1: Create booking
       const booking = await schedulingService.createBooking(
         { service: Number(params.serviceId) },
-        { idempotencyKey: `bk-${sessionKey}` }
+        { idempotencyKey: `bk-${sessionKey}` },
       );
 
-      // Step 2: Create hiring with booking reference
+      // Step 2: Create hiring
       const hiring = await hiringService.create(
         {
           booking_id: booking.id,
           agreed_price: servicePrice,
           work_date: params.workDate,
           location: params.location ?? '',
-          notes: `Waktu: ${params.startTime ?? ''}`,
+          notes: `Mode: ${params.mode ?? 'harian'} | Waktu: ${timeDisplay}`,
         },
-        { idempotencyKey: `hi-${sessionKey}` }
+        { idempotencyKey: `hi-${sessionKey}` },
       );
 
-      // Step 3: Navigate to success page
       router.replace({
         pathname: '/booking/success',
         params: { hiringId: String(hiring.id) },
       });
     } catch (e) {
-      const msg = e instanceof ApiError
-        ? e.message
-        : 'Terjadi kesalahan. Silakan coba lagi.';
+      const msg = e instanceof ApiError ? e.message : 'Terjadi kesalahan. Silakan coba lagi.';
       setError(msg);
       setLoading(false);
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return '-';
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  };
-
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cream }}>
-      <Stack.Screen
-        options={{
-          title: 'Pembayaran',
-          headerShown: true,
-          headerStyle: { backgroundColor: Colors.cream },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          headerBackButtonDisplayMode: 'minimal',
-        }}
-      />
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      {/* ── Blue Header ── */}
+      <View style={{
+        backgroundColor: BLUE,
+        paddingTop: Platform.OS === 'ios' ? 56 : 40,
+        paddingBottom: 24,
+        paddingHorizontal: 20,
+      }}>
+        <Pressable
+          onPress={() => router.back()}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}
+        >
+          <Ionicons name="chevron-back" size={20} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 14 }}>Kembali</Text>
+        </Pressable>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: FontWeight.bold, textAlign: 'center' }}>
+          Rekrut
+        </Text>
+      </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: Spacing.xl, paddingBottom: 140, gap: Spacing.md }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 14 }}
       >
-        {/* ── Provider Summary ── */}
+        {/* ── Booking Summary ── */}
         <View style={{
-          backgroundColor: Colors.slate900,
-          borderRadius: Radius.xl,
-          padding: Spacing.md,
-          borderWidth: 1, borderColor: Colors.grayLight,
-          gap: Spacing.sm,
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+          padding: 16,
+          gap: 10,
         }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <View style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: Colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
-              <Ionicons name="person" size={24} color={Colors.primary} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{
+              width: 48, height: 48, borderRadius: 24,
+              backgroundColor: BLUE + '20',
+              justifyContent: 'center', alignItems: 'center',
+            }}>
+              <Ionicons name="person" size={24} color={BLUE} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: FontSize.xs, color: Colors.textMuted }}>{params.categoryName}</Text>
-              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary }}>{params.providerName}</Text>
-              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.primary }}>{formatRupiah(servicePrice)}</Text>
+              <Text style={{ fontSize: 13, color: '#777' }}>{params.categoryName}</Text>
+              <Text style={{ fontSize: 16, fontWeight: FontWeight.bold, color: '#111' }}>
+                {params.providerName}
+              </Text>
+            </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={{ fontSize: 15, fontWeight: FontWeight.bold, color: BLUE }}>
+                {fmtRp(basePricePerDay)}
+              </Text>
+              {isRentang && numDays > 1 && (
+                <Text style={{ fontSize: 11, color: '#777' }}>per hari</Text>
+              )}
             </View>
           </View>
 
-          <View style={{ height: 1, backgroundColor: Colors.grayLight }} />
+          <View style={{ height: 1, backgroundColor: '#F0F0F0' }} />
 
-          {/* Date, Time, Location rows */}
-          {[
-            { icon: 'calendar-outline', label: 'Tanggal', value: formatDate(params.workDate ?? '') },
-            { icon: 'time-outline', label: 'Waktu', value: params.startTime ?? '-' },
-            { icon: 'location-outline', label: 'Lokasi', value: params.location ?? '-' },
-          ].map(({ icon, label, value }) => (
-            <View key={label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ionicons name={icon as any} size={16} color={Colors.textMuted} />
-                <Text style={{ fontSize: FontSize.sm, color: Colors.textMuted }}>{label}</Text>
-              </View>
-              <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.textPrimary, maxWidth: '55%', textAlign: 'right' }} numberOfLines={1}>
-                {value}
+          {/* Tanggal row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="calendar-outline" size={15} color="#777" />
+              <Text style={{ fontSize: 13, color: '#777' }}>
+                {isRentang ? 'Rentang' : 'Tanggal'}
               </Text>
             </View>
-          ))}
+            <Text style={{ fontSize: 13, fontWeight: FontWeight.semibold, color: '#111', maxWidth: '58%', textAlign: 'right' }}>
+              {dateDisplay}
+            </Text>
+          </View>
+
+          {/* Waktu row */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Ionicons name="time-outline" size={15} color="#777" />
+              <Text style={{ fontSize: 13, color: '#777' }}>Waktu</Text>
+            </View>
+            <Text style={{ fontSize: 13, fontWeight: FontWeight.semibold, color: '#111' }}>
+              {timeDisplay}
+            </Text>
+          </View>
         </View>
 
-        {/* ── Payment Methods ── */}
-        <View style={{ backgroundColor: Colors.slate900, borderRadius: Radius.xl, padding: Spacing.md, borderWidth: 1, borderColor: Colors.grayLight }}>
-          <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.md }}>
+        {/* ── Metode Pembayaran ── */}
+        <View style={{
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+          padding: 16,
+        }}>
+          <Text style={{ fontSize: 15, fontWeight: FontWeight.bold, color: '#111', marginBottom: 14 }}>
             Metode Pembayaran
           </Text>
 
@@ -236,18 +402,7 @@ export default function PaymentScreen() {
             value="card"
             label="Kartu Kredit/Debit"
             onSelect={setPaymentMethod}
-            icons={
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                {/* Mastercard */}
-                <View style={{ width: 28, height: 18, borderRadius: 4, backgroundColor: '#EB001B', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                  <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FF5F00', position: 'absolute', left: 8 }} />
-                </View>
-                {/* Visa */}
-                <View style={{ width: 28, height: 18, borderRadius: 4, backgroundColor: '#1A1F71', justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 7, fontWeight: FontWeight.bold, color: '#fff', fontStyle: 'italic' }}>VISA</Text>
-                </View>
-              </View>
-            }
+            icons={<CardIcons />}
           />
 
           <PaymentOption
@@ -255,130 +410,77 @@ export default function PaymentScreen() {
             value="ewallet"
             label="E-Wallet"
             onSelect={setPaymentMethod}
-            icons={
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                {/* OVO */}
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#4B2FBF', justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 6, fontWeight: FontWeight.bold, color: '#fff' }}>OVO</Text>
-                </View>
-                {/* GoPay */}
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#00AA13', justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 5, fontWeight: FontWeight.bold, color: '#fff' }}>Go</Text>
-                </View>
-                {/* ShopeePay */}
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#EE4D2D', justifyContent: 'center', alignItems: 'center' }}>
-                  <Text style={{ fontSize: 5, fontWeight: FontWeight.bold, color: '#fff' }}>SPay</Text>
-                </View>
-              </View>
-            }
+            icons={<EWalletIcons />}
           />
         </View>
 
-        {/* ── Transaction Detail ── */}
-        <View style={{ backgroundColor: Colors.slate900, borderRadius: Radius.xl, padding: Spacing.md, borderWidth: 1, borderColor: Colors.grayLight }}>
-          <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.md }}>
+        {/* ── Detail Transaksi ── */}
+        <View style={{
+          backgroundColor: '#fff',
+          borderRadius: 14,
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+          padding: 16,
+        }}>
+          <Text style={{ fontSize: 15, fontWeight: FontWeight.bold, color: '#111', marginBottom: 12 }}>
             Detail Transaksi
           </Text>
 
-          <TransactionRow label="Biaya Jasa" amount={servicePrice} />
+          <TransactionRow
+            label={isRentang && numDays > 1
+              ? `Biaya Jasa (${fmtRp(basePricePerDay)} × ${numDays} hari)`
+              : 'Biaya Jasa'}
+            amount={servicePrice}
+          />
           <TransactionRow label="Biaya Transportasi" amount={TRANSPORT_FEE} />
-          <TransactionRow label="Biaya Platform" amount={PLATFORM_FEE} />
+          <TransactionRow label="Biaya Platform"     amount={PLATFORM_FEE}  />
 
-          <View style={{ height: 1, backgroundColor: Colors.grayLight, marginVertical: Spacing.sm }} />
+          <View style={{ height: 1, backgroundColor: '#E5E7EB', marginVertical: 10 }} />
 
           <TransactionRow label="Total" amount={total} bold />
         </View>
 
         {/* ── Error ── */}
-        {error ? (
-          <View style={{ backgroundColor: Colors.errorSoft, padding: Spacing.md, borderRadius: Radius.lg }}>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.error }}>{error}</Text>
+        {!!error && (
+          <View style={{ backgroundColor: '#FEE2E2', padding: 14, borderRadius: 10 }}>
+            <Text style={{ fontSize: 13, color: '#DC2626' }}>{error}</Text>
           </View>
-        ) : null}
+        )}
       </ScrollView>
 
       {/* ── Fixed Bottom CTA ── */}
       <View style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: Colors.cream,
-        paddingHorizontal: Spacing.xl,
-        paddingTop: Spacing.md,
-        paddingBottom: Platform.OS === 'ios' ? 36 : Spacing.xl,
-        borderTopWidth: 1, borderTopColor: Colors.grayLight,
+        backgroundColor: '#fff',
+        paddingHorizontal: 20,
+        paddingTop: 12,
+        paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+        borderTopWidth: 1, borderTopColor: '#F0F0F0',
       }}>
         <Pressable
-          onPress={() => setShowConfirmModal(true)}
+          onPress={() => setShowConfirm(true)}
           disabled={loading}
           style={({ pressed }) => ({
-            backgroundColor: Colors.warning,
-            borderRadius: Radius.xl,
+            backgroundColor: GOLD,
+            borderRadius: 40,
             paddingVertical: 16,
             alignItems: 'center',
             opacity: pressed || loading ? 0.85 : 1,
           })}
         >
-          {loading ? (
-            <ActivityIndicator size="small" color="#1a1a1a" />
-          ) : (
-            <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#1a1a1a' }}>
-              Rekrut
-            </Text>
-          )}
+          <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: '#111' }}>
+            Rekrut
+          </Text>
         </Pressable>
       </View>
 
       {/* ── Confirmation Modal ── */}
-      <Modal visible={showConfirmModal} transparent animationType="fade">
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: Spacing.xl }}
-          onPress={() => setShowConfirmModal(false)}
-        >
-          <Pressable
-            onPress={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: Colors.slate900,
-              borderRadius: Radius.xl,
-              padding: Spacing.xl,
-              width: '100%',
-              gap: Spacing.md,
-            }}
-          >
-            <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, textAlign: 'center' }}>
-              Apakah kamu yakin ingin merekrut?
-            </Text>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
-              Pastikan metode pembayaran sudah benar sebelum melanjutkan proses
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.sm }}>
-              <Pressable
-                onPress={() => setShowConfirmModal(false)}
-                style={({ pressed }) => ({
-                  flex: 1, paddingVertical: 14, borderRadius: Radius.lg,
-                  borderWidth: 1.5, borderColor: Colors.grayMed,
-                  alignItems: 'center', opacity: pressed ? 0.7 : 1,
-                })}
-              >
-                <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textMuted }}>
-                  Batalkan
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={handleSubmit}
-                style={({ pressed }) => ({
-                  flex: 1, paddingVertical: 14, borderRadius: Radius.lg,
-                  backgroundColor: Colors.warning,
-                  alignItems: 'center', opacity: pressed ? 0.85 : 1,
-                })}
-              >
-                <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#1a1a1a' }}>
-                  Rekrut
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      <ConfirmModal
+        visible={showConfirm}
+        loading={loading}
+        onConfirm={handleSubmit}
+        onCancel={() => setShowConfirm(false)}
+      />
     </View>
   );
 }
