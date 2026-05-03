@@ -118,7 +118,7 @@ export default function ProviderServicesScreen() {
                     style={{
                       fontSize: FontSize.md,
                       fontWeight: FontWeight.bold,
-                      color: Colors.red,
+                      color: Colors.error,
                       fontVariant: ['tabular-nums'],
                     }}
                     selectable

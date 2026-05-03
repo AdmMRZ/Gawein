@@ -226,7 +226,7 @@ export default function ProviderProfileScreen() {
           visibleCards={visibleCards}
           onBack={goProfile}
           onAdd={() => setMode('add-card')}
-          onToggle={(id) => setVisibleCards((prev) => ({ ...prev, [id]: !prev[id] }))}
+          onToggle={(id: number) => setVisibleCards((prev) => ({ ...prev, [id]: !prev[id] }))}
           onDelete={setDeleteTarget}
         />
       )}
@@ -235,7 +235,7 @@ export default function ProviderProfileScreen() {
           form={cardForm}
           saving={saving}
           onBack={() => setMode('cards')}
-          onChange={(key, value) => setCardForm((prev) => ({ ...prev, [key]: value }))}
+          onChange={(key: keyof PaymentCardInput, value: string) => setCardForm((prev) => ({ ...prev, [key]: value }))}
           onSubmit={handleAddCard}
         />
       )}

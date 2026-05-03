@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, ActivityIndicator, View, ViewStyle, StyleProp } from 'react-native';
+import { Pressable, Text, ActivityIndicator, View, ViewStyle, TextStyle, StyleProp } from 'react-native';
 import { Colors, Radius, FontSize, FontWeight, Spacing } from '@/constants/theme';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -16,6 +16,7 @@ interface ButtonProps {
   icon?: React.ReactNode;
   fullWidth?: boolean;
   style?: StyleProp<ViewStyle>;
+  textStyle?: StyleProp<TextStyle>;
 }
 
 const variantStyles: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
@@ -42,6 +43,7 @@ export function Button({
   icon,
   fullWidth = false,
   style,
+  textStyle,
 }: ButtonProps) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -97,12 +99,15 @@ export function Button({
           <>
             {icon}
             <Text
-              style={{
-                fontSize: s.fontSize,
-                fontWeight: FontWeight.bold, // Bolder button text!
-                color: disabled ? Colors.grayMed : v.text,
-                letterSpacing: 0.2, // Spread out a bit for modern feeling
-              }}
+              style={[
+                {
+                  fontSize: s.fontSize,
+                  fontWeight: FontWeight.bold, // Bolder button text!
+                  color: disabled ? Colors.grayMed : v.text,
+                  letterSpacing: 0.2, // Spread out a bit for modern feeling
+                },
+                textStyle,
+              ]}
             >
               {title}
             </Text>

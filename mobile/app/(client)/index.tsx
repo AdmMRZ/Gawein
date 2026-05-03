@@ -67,7 +67,7 @@ export default function HomeScreen() {
         provider.user.last_name,
         provider.bio,
         provider.gender,
-        provider.location,
+        provider.city,
         firstService?.title,
         firstService?.category_name,
       ].filter(Boolean).join(' ').toLowerCase();

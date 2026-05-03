@@ -50,7 +50,7 @@ export default function CreateServiceScreen() {
         title: title.trim(),
         description: description.trim(),
         price: Number(price),
-        location: cityName, // Legacy compatibility if needed
+        city: cityName, // Legacy compatibility if needed
         city_id: cityId,
         category: selectedCategory,
         service_scope: scope.trim(),

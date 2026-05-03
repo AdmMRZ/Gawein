@@ -42,7 +42,7 @@ export default function HistoryDetailScreen() {
             <Row label="Penyedia" value={hiring.provider_name} />
             <Row label="Harga" value={`Rp ${parseInt(hiring.agreed_price).toLocaleString('id-ID')}`} />
             <Row label="Tanggal Kerja" value={hiring.work_date} />
-            <Row label="Lokasi" value={hiring.location || '-'} />
+            <Row label="Lokasi" value={hiring.city || '-'} />
             {hiring.notes ? <Row label="Catatan" value={hiring.notes} /> : null}
             <Row
               label="Dibuat"

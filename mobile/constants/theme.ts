@@ -6,6 +6,7 @@
 export const Colors = {
   // ── Primary Brand (Vibrant Blue) ────────────────────────
   navy: '#315BE8',       
+  primary: '#315BE8',
   navyLight: '#C9D7FF',
   navyDark: '#1E3A8A',
 
@@ -29,9 +30,15 @@ export const Colors = {
   
   // Status
   success: '#10B981',
+  successSoft: '#D1FAE5',
   warning: '#F59E0B',
+  warningSoft: '#FEF3C7',
   error: '#EF4444',
+  errorSoft: '#FEE2E2',
+  errorLight: '#FCA5A5',
   info: '#315BE8',
+  infoSoft: '#DBEAFE',
+  slate900: '#0F172A',
 };
 
 export const Spacing = {

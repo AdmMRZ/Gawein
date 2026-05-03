@@ -17,7 +17,7 @@ export default function EditServiceScreen() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [location, setLocation] = useState('');
+  const [city, setCity] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -28,7 +28,7 @@ export default function EditServiceScreen() {
         setTitle(s.title);
         setDescription(s.description);
         setPrice(String(parseInt(s.price)));
-        setLocation(s.location);
+        setCity(s.city);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -42,7 +42,7 @@ export default function EditServiceScreen() {
         title: title.trim(),
         description: description.trim(),
         price: Number(price),
-        location: location.trim(),
+        city: city.trim(),
       });
       Alert.alert('Berhasil', 'Layanan diperbarui.', [
         { text: 'OK', onPress: () => router.back() },
@@ -74,7 +74,7 @@ export default function EditServiceScreen() {
           style={{ height: 100, textAlignVertical: 'top', paddingTop: 12 }}
         />
         <Input label="Harga (Rp)" value={price} onChangeText={setPrice} keyboardType="numeric" />
-        <Input label="Lokasi" value={location} onChangeText={setLocation} />
+        <Input label="Lokasi" value={city} onChangeText={setCity} />
 
         {error ? <Text style={{ fontSize: FontSize.sm, color: Colors.error }} selectable>{error}</Text> : null}
 
