@@ -13,7 +13,7 @@ class SearchService:
         return CatalogRepository.search_providers(
             keyword=params.get('keyword'),
             category=params.get('category'),
-            location=params.get('location'),
+            city_id=params.get('city_id'),
             min_price=params.get('min_price'),
             max_price=params.get('max_price'),
             gender=params.get('gender'),

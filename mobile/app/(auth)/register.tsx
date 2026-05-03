@@ -61,7 +61,7 @@ export default function RegisterScreen() {
   };
 
   const handleNameChange = (value: string) => {
-    const nextForm = { ...form, ...buildNameState(value), role: 'client' as const };
+    const nextForm = { ...form, ...buildNameState(value) };
     setForm(nextForm);
     if (submitError) setSubmitError('');
     if (touched.firstName || touched.username) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
@@ -135,6 +135,21 @@ export default function RegisterScreen() {
             <Text style={{ color: '#050505', fontSize: 40, lineHeight: 48, fontWeight: '900', textAlign: 'center', marginBottom: 28 }}>
               Sign Up
             </Text>
+
+            <View style={{ flexDirection: 'row', backgroundColor: '#F5F5F5', borderRadius: 12, padding: 4, marginBottom: 20 }}>
+              <Pressable
+                onPress={() => handleChange('role', 'client')}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: form.role === 'client' ? BLUE : 'transparent', alignItems: 'center' }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '800', color: form.role === 'client' ? '#FFFFFF' : '#888888' }}>Pencari Jasa</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => handleChange('role', 'provider')}
+                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: form.role === 'provider' ? BLUE : 'transparent', alignItems: 'center' }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '800', color: form.role === 'provider' ? '#FFFFFF' : '#888888' }}>Penyedia Jasa</Text>
+              </Pressable>
+            </View>
 
             <AuthField
               label="Nama"

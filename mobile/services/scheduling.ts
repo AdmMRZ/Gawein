@@ -41,10 +41,11 @@ export const schedulingService = {
     service: number;
     availability?: number;
     notes?: string;
-  }): Promise<Booking> {
+  }, options?: { idempotencyKey?: string }): Promise<Booking> {
     return api<Booking>('/bookings/', {
       method: 'POST',
       body: data as unknown as Record<string, unknown>,
+      idempotencyKey: options?.idempotencyKey,
     });
   },
 

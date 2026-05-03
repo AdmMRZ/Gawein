@@ -11,6 +11,7 @@ from main.serializers.transaction import (
     HiringStatusSerializer,
 )
 from main.services.hiring import HiringService
+from main.utils import idempotent_request
 
 
 class HiringListCreateView(APIView):
@@ -26,6 +27,7 @@ class HiringListCreateView(APIView):
         serializer = HiringSerializer(hirings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @idempotent_request
     def post(self, request):
         # Only clients can create hirings
         if request.user.role != 'client':

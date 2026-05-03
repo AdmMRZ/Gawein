@@ -85,3 +85,19 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review #{self.pk}: {self.rating}★ for {self.provider.user.email}"
+
+
+class IdempotencyKey(models.Model):
+    """Storage for idempotency keys to prevent duplicate requests."""
+    key = models.CharField(max_length=255, unique=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    response_code = models.IntegerField()
+    response_body = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'idempotency_keys'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Key: {self.key} for {self.user.email}"

@@ -53,7 +53,13 @@ class ClientProfile(models.Model):
         related_name='client_profile',
     )
     phone = models.CharField(max_length=20, blank=True, default='')
-    location = models.CharField(max_length=255, blank=True, default='')
+    city = models.ForeignKey(
+        'main.City',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='clients',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -110,7 +116,13 @@ class ProviderProfile(models.Model):
         default='',
     )
     age = models.PositiveIntegerField(null=True, blank=True)
-    location = models.CharField(max_length=255, blank=True, default='')
+    city = models.ForeignKey(
+        'main.City',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='providers',
+    )
     years_of_experience = models.PositiveIntegerField(default=0)
     is_verified = models.BooleanField(default=False)
     verification_status = models.CharField(

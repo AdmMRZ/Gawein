@@ -20,7 +20,7 @@ class ClientProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClientProfile
-        fields = ['id', 'phone', 'location', 'created_at', 'updated_at']
+        fields = ['id', 'phone', 'city', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
@@ -30,7 +30,7 @@ class ProviderProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProviderProfile
         fields = [
-            'id', 'bio', 'gender', 'age', 'location',
+            'id', 'bio', 'gender', 'age', 'city',
             'years_of_experience', 'is_verified', 'verification_status',
             'rating_average', 'total_reviews',
             'created_at', 'updated_at',
@@ -51,7 +51,7 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProviderProfile
         fields = [
-            'id', 'user', 'bio', 'gender', 'age', 'location',
+            'id', 'user', 'bio', 'gender', 'age', 'city',
             'years_of_experience', 'is_verified', 'verification_status',
             'rating_average', 'total_reviews',
             'services', 'created_at', 'updated_at',

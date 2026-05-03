@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from main.models import Category, Service
+from main.models import Category, Service, City
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -8,7 +8,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'description', 'is_active', 'created_at', 'updated_at']
+        fields = ['id', 'name', 'icon_name', 'description', 'is_active', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
@@ -16,13 +16,14 @@ class ServiceSerializer(serializers.ModelSerializer):
     """Service read serializer with category name."""
 
     category_name = serializers.CharField(source='category.name', read_only=True, default=None)
+    category_icon = serializers.CharField(source='category.icon_name', read_only=True, default=None)
     provider_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Service
         fields = [
-            'id', 'provider', 'category', 'category_name', 'provider_name',
-            'title', 'description', 'price', 'location',
+            'id', 'provider', 'category', 'category_name', 'category_icon', 'provider_name',
+            'title', 'description', 'price', 'city',
             'service_scope', 'service_limitations', 'is_active',
             'created_at', 'updated_at',
         ]
@@ -40,7 +41,7 @@ class ServiceCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Service
         fields = [
-            'category', 'title', 'description', 'price', 'location',
+            'category', 'title', 'description', 'price', 'city',
             'service_scope', 'service_limitations', 'is_active',
         ]
 
@@ -60,7 +61,7 @@ class ServiceDetailSerializer(serializers.ModelSerializer):
         model = Service
         fields = [
             'id', 'provider_info', 'category',
-            'title', 'description', 'price', 'location',
+            'title', 'description', 'price', 'city',
             'service_scope', 'service_limitations', 'is_active',
             'created_at', 'updated_at',
         ]
@@ -72,5 +73,11 @@ class ServiceDetailSerializer(serializers.ModelSerializer):
             'name': f"{obj.provider.user.first_name} {obj.provider.user.last_name}".strip() or obj.provider.user.username,
             'rating_average': str(obj.provider.rating_average),
             'is_verified': obj.provider.is_verified,
-            'location': obj.provider.location,
+            'city': obj.provider.city.name if obj.provider.city else '',
         }
+
+class CitySerializer(serializers.ModelSerializer):
+    province_name = serializers.CharField(source='province.name', read_only=True)
+    class Meta:
+        model = City
+        fields = ['id', 'name', 'province_name']

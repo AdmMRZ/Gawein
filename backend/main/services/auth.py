@@ -35,7 +35,7 @@ class AuthService:
             UserRepository.create_client_profile(
                 user=user,
                 phone=validated_data.get('phone', ''),
-                location=validated_data.get('location', ''),
+                city_id=validated_data.get('city_id'),
             )
         elif role == 'provider':
             UserRepository.create_provider_profile(
@@ -43,7 +43,7 @@ class AuthService:
                 bio=validated_data.get('bio', ''),
                 gender=validated_data.get('gender', ''),
                 age=validated_data.get('age'),
-                location=validated_data.get('location', ''),
+                city_id=validated_data.get('city_id'),
                 years_of_experience=validated_data.get('years_of_experience', 0),
             )
 

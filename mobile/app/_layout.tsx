@@ -8,7 +8,7 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Colors } from '@/constants/theme';
 
 function RootNavigation() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
@@ -20,11 +20,17 @@ function RootNavigation() {
     if (!isAuthenticated && !inAuth) {
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuth) {
+      if (user?.role === 'provider') {
+        router.replace('/(provider)');
+      } else {
+        router.replace('/(client)');
+      }
+    } else if (isAuthenticated && segments[0] === '(provider)' && user?.role !== 'provider') {
       router.replace('/(client)');
-    } else if (isAuthenticated && segments[0] === '(provider)') {
-      router.replace('/(client)');
+    } else if (isAuthenticated && segments[0] === '(client)' && user?.role === 'provider') {
+      router.replace('/(provider)');
     }
-  }, [isAuthenticated, isLoading, router, segments]);
+  }, [isAuthenticated, isLoading, router, segments, user]);
 
   if (isLoading) {
     return <LoadingScreen message="Menyiapkan GaweIn..." />;
@@ -56,6 +62,13 @@ function RootNavigation() {
             headerBackButtonDisplayMode: 'minimal',
             headerTintColor: Colors.textPrimary,
             headerStyle: { backgroundColor: Colors.cream },
+          }}
+        />
+        <Stack.Screen
+          name="messages/[id]"
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
           }}
         />
         <Stack.Screen

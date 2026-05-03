@@ -74,7 +74,7 @@ class CatalogRepository:
     def search_providers(
         keyword: str | None = None,
         category: int | None = None,
-        location: str | None = None,
+        city_id: int | None = None,
         min_price: float | None = None,
         max_price: float | None = None,
         gender: str | None = None,
@@ -111,8 +111,8 @@ class CatalogRepository:
             qs = qs.filter(services__category_id=category)
 
         # Filter by provider location
-        if location:
-            qs = qs.filter(location__icontains=location)
+        if city_id:
+            qs = qs.filter(city_id=city_id)
 
         # Filter by price range (on provider's services)
         if min_price is not None:

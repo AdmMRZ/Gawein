@@ -11,6 +11,7 @@ from main.serializers.scheduling import (
     BookingStatusSerializer,
 )
 from main.services.scheduling import SchedulingService
+from main.utils import idempotent_request
 
 
 class AvailabilityListCreateView(APIView):
@@ -75,6 +76,7 @@ class BookingListCreateView(APIView):
         serializer = BookingSerializer(bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @idempotent_request
     def post(self, request):
         serializer = BookingCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

@@ -17,7 +17,7 @@ class UserService:
                 profile_data = {
                     'id': profile.id,
                     'phone': profile.phone,
-                    'location': profile.location,
+                    'city': profile.city.name if profile.city else '', 'city_id': profile.city_id,
                 }
         elif user.role == 'provider':
             profile = UserRepository.get_provider_profile(user)
@@ -27,7 +27,7 @@ class UserService:
                     'bio': profile.bio,
                     'gender': profile.gender,
                     'age': profile.age,
-                    'location': profile.location,
+                    'city': profile.city.name if profile.city else '', 'city_id': profile.city_id,
                     'years_of_experience': profile.years_of_experience,
                     'is_verified': profile.is_verified,
                     'verification_status': profile.verification_status,
@@ -69,13 +69,13 @@ class UserService:
         if user.role == 'client':
             profile = UserRepository.get_client_profile(user)
             if profile:
-                profile_fields = {k: v for k, v in data.items() if k in ['phone', 'location']}
+                profile_fields = {k: v for k, v in data.items() if k in ['phone', 'city_id']}
                 if profile_fields:
                     UserRepository.update_client_profile(profile, **profile_fields)
         elif user.role == 'provider':
             profile = UserRepository.get_provider_profile(user)
             if profile:
-                allowed = ['bio', 'gender', 'age', 'location', 'years_of_experience']
+                allowed = ['bio', 'gender', 'age', 'city_id', 'years_of_experience']
                 profile_fields = {k: v for k, v in data.items() if k in allowed}
                 if profile_fields:
                     UserRepository.update_provider_profile(profile, **profile_fields)

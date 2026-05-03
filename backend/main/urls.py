@@ -2,7 +2,7 @@ from django.urls import path
 
 from main.views.auth import RegisterView, LoginView, LogoutView, ChangePasswordView
 from main.views.user import ProfileView, PaymentCardListCreateView, PaymentCardDetailView
-from main.views.catalog import CategoryListCreateView, CategoryDetailView
+from main.views.catalog import CategoryListCreateView, CategoryDetailView, CityListView
 from main.views.provider import (
     ProviderListView,
     ProviderDetailView,
@@ -28,6 +28,7 @@ from main.views.admin import (
     VerifyProviderView,
     RejectProviderView,
 )
+from main.views.chat import ChatRoomViewSet
 
 app_name = 'main'
 
@@ -42,6 +43,7 @@ urlpatterns = [
     path('payment-cards/<int:pk>/', PaymentCardDetailView.as_view(), name='payment-card-detail'),
 
     # ── Category ────────────────────────────────────────────
+    path('cities/', CityListView.as_view(), name='city-list'),
     path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
     path('categories/<int:pk>/', CategoryDetailView.as_view(), name='category-detail'),
 
@@ -77,4 +79,9 @@ urlpatterns = [
     path('admin/providers/pending/', PendingProviderListView.as_view(), name='admin-pending-providers'),
     path('admin/providers/<int:pk>/verify/', VerifyProviderView.as_view(), name='admin-verify-provider'),
     path('admin/providers/<int:pk>/reject/', RejectProviderView.as_view(), name='admin-reject-provider'),
+
+    # ── Chat ────────────────────────────────────────────────
+    path('chat/rooms/', ChatRoomViewSet.as_view({'get': 'list'}), name='chat-room-list'),
+    path('chat/rooms/get_or_create/', ChatRoomViewSet.as_view({'post': 'get_or_create'}), name='chat-room-get-or-create'),
+    path('chat/rooms/<int:pk>/messages/', ChatRoomViewSet.as_view({'get': 'messages'}), name='chat-room-messages'),
 ]

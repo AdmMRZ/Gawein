@@ -18,11 +18,11 @@ interface ButtonProps {
 }
 
 const variantStyles: Record<ButtonVariant, { bg: string; text: string; border?: string }> = {
-  primary: { bg: Colors.navy, text: Colors.textPrimary },
-  secondary: { bg: Colors.red, text: Colors.textPrimary },
-  outline: { bg: 'transparent', text: Colors.textPrimary, border: Colors.navyLight },
+  primary: { bg: Colors.navy, text: Colors.textInverse },
+  secondary: { bg: Colors.gold, text: Colors.textPrimary },
+  outline: { bg: 'transparent', text: Colors.navy, border: Colors.navyLight },
   ghost: { bg: 'transparent', text: Colors.textSecondary },
-  danger: { bg: Colors.error, text: Colors.textPrimary },
+  danger: { bg: Colors.error, text: Colors.textInverse },
 };
 
 const sizeStyles: Record<ButtonSize, { h: number; px: number; fontSize: number }> = {

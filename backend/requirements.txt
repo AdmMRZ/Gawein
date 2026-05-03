@@ -10,3 +10,5 @@ djangorestframework
 djangorestframework-simplejwt
 django-filter
 django-cors-headers
+channels
+daphne
