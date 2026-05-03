@@ -41,7 +41,8 @@ function CircularTabBar({ state, descriptors, navigation }: any) {
 
           // Icon Mapping
           let iconName = 'grid-outline';
-          if (route.name === 'index') iconName = isFocused ? 'grid' : 'grid-outline';
+          if (route.name === 'home') iconName = isFocused ? 'home' : 'home-outline';
+          else if (route.name === 'index') iconName = isFocused ? 'grid' : 'grid-outline';
           else if (route.name === 'services') iconName = isFocused ? 'briefcase' : 'briefcase-outline';
           else if (route.name === 'schedule') iconName = isFocused ? 'calendar' : 'calendar-outline'; 
           else if (route.name === 'profile') iconName = isFocused ? 'person' : 'person-outline';
@@ -79,6 +80,7 @@ export default function ProviderLayout() {
         headerShown: false,
       }}
     >
+      <Tabs.Screen name="home" options={{ title: 'Beranda' }} />
       <Tabs.Screen name="index" options={{ title: 'Dashboard' }} />
       <Tabs.Screen name="services" options={{ title: 'Layanan' }} />
       <Tabs.Screen name="schedule" options={{ title: 'Jadwal' }} />
