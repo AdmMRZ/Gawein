@@ -3,13 +3,10 @@ import {
   View,
   Text,
   ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-  TextInput,
   Pressable,
-  Alert,
   Modal,
-  TouchableOpacity,
+  Image,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -19,527 +16,570 @@ import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
 import type { Service, ProviderProfile } from '@/types';
 
-// ── Format Helpers ─────────────────────────────────────────
-const formatRupiah = (value: string | number) => {
-  const num = typeof value === 'number' ? value : parseInt(value.replace(/\D/g, ''), 10);
-  if (isNaN(num)) return 'Rp 0';
-  return `Rp ${num.toLocaleString('id-ID')}`;
+// ── Constants ──────────────────────────────────────────────
+const BLUE = '#315BE8';
+const BLUE_LIGHT = '#E8EEFF';
+const GOLD = '#FFD45A';
+const DAY_LABELS = ['SAN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
+
+// Dummy provider for now
+const DUMMY_PROVIDER = {
+  name: 'Yayan Sukayan',
+  role: 'Sopir Mobil',
+  avatar: null as null,
 };
 
-const formatDateDisplay = (dateStr: string) => {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-};
-
-// ── Date Picker Modal ──────────────────────────────────────
-function DatePickerModal({
-  visible,
-  value,
-  onConfirm,
-  onCancel,
-}: {
-  visible: boolean;
-  value: string;
-  onConfirm: (date: string) => void;
-  onCancel: () => void;
-}) {
-  const today = new Date();
-  const [year, setYear] = useState(value ? parseInt(value.split('-')[0]) : today.getFullYear());
-  const [month, setMonth] = useState(value ? parseInt(value.split('-')[1]) - 1 : today.getMonth());
-  const [day, setDay] = useState(value ? parseInt(value.split('-')[2]) : today.getDate());
-
-  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const handleConfirm = () => {
-    const d = String(day).padStart(2, '0');
-    const m = String(month + 1).padStart(2, '0');
-    onConfirm(`${year}-${m}-${d}`);
-  };
-
-  return (
-    <Modal visible={visible} transparent animationType="slide">
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onCancel}>
-        <View style={{ flex: 1 }} />
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: Colors.slate900,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: Spacing.xl,
-            gap: Spacing.lg,
-          }}
-        >
-          <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, textAlign: 'center' }}>
-            Pilih Tanggal
-          </Text>
-
-          {/* Year Row */}
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: Spacing.xl }}>
-            <Pressable onPress={() => setYear(y => y - 1)}>
-              <Ionicons name="chevron-back" size={24} color={Colors.primary} />
-            </Pressable>
-            <Text style={{ fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: Colors.textPrimary, width: 60, textAlign: 'center' }}>{year}</Text>
-            <Pressable onPress={() => setYear(y => y + 1)}>
-              <Ionicons name="chevron-forward" size={24} color={Colors.primary} />
-            </Pressable>
-          </View>
-
-          {/* Month Chips */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-            {MONTHS.map((m, i) => (
-              <Pressable
-                key={m}
-                onPress={() => setMonth(i)}
-                style={{
-                  paddingHorizontal: 12, paddingVertical: 6,
-                  borderRadius: Radius.pill,
-                  backgroundColor: month === i ? Colors.primary : Colors.grayLight,
-                }}
-              >
-                <Text style={{ fontSize: FontSize.sm, color: month === i ? '#fff' : Colors.textMuted, fontWeight: FontWeight.medium }}>
-                  {m}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* Day Grid */}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
-            {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => (
-              <Pressable
-                key={d}
-                onPress={() => setDay(d)}
-                style={{
-                  width: 40, height: 40, borderRadius: 20,
-                  justifyContent: 'center', alignItems: 'center',
-                  backgroundColor: day === d ? Colors.primary : 'transparent',
-                }}
-              >
-                <Text style={{ fontSize: FontSize.sm, color: day === d ? '#fff' : Colors.textPrimary, fontWeight: day === d ? FontWeight.bold : FontWeight.regular }}>
-                  {d}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-            <Pressable
-              onPress={onCancel}
-              style={{ flex: 1, padding: Spacing.md, borderRadius: Radius.lg, borderWidth: 1, borderColor: Colors.grayMed, alignItems: 'center' }}
-            >
-              <Text style={{ color: Colors.textMuted, fontWeight: FontWeight.semibold }}>Batal</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleConfirm}
-              style={{ flex: 1, padding: Spacing.md, borderRadius: Radius.lg, backgroundColor: Colors.primary, alignItems: 'center' }}
-            >
-              <Text style={{ color: '#fff', fontWeight: FontWeight.bold }}>Konfirmasi</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
+// ── Helpers ────────────────────────────────────────────────
+function getDaysInMonth(year: number, month: number) {
+  return new Date(year, month + 1, 0).getDate();
 }
 
-// ── Time Picker Modal ──────────────────────────────────────
+function getFirstDayOfMonth(year: number, month: number) {
+  return new Date(year, month, 1).getDay();
+}
+
+function pad(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+function formatDateLabel(year: number, month: number, day: number) {
+  const date = new Date(year, month, day);
+  const dayName = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][date.getDay()];
+  return `${MONTH_NAMES[month]} ${year}\n${dayName}`;
+}
+
+// ── Time Picker Spinner Modal ───────────────────────────────
 function TimePickerModal({
   visible,
-  value,
+  initial,
   onConfirm,
   onCancel,
 }: {
   visible: boolean;
-  value: string;
-  onConfirm: (time: string) => void;
+  initial: { hour: number; minute: number; ampm: 'AM' | 'PM' };
+  onConfirm: (h: number, m: number, ampm: 'AM' | 'PM') => void;
   onCancel: () => void;
 }) {
-  const [hour, setHour] = useState(value ? parseInt(value.split(':')[0]) : 8);
-  const [minute, setMinute] = useState(value ? parseInt(value.split(':')[1]) : 0);
+  const [hour, setHour] = useState(initial.hour);
+  const [minute, setMinute] = useState(initial.minute);
+  const [ampm, setAmpm] = useState<'AM' | 'PM'>(initial.ampm);
 
-  const HOURS = Array.from({ length: 24 }, (_, i) => i);
-  const MINUTES = [0, 15, 30, 45];
-
-  const handleConfirm = () => {
-    const h = String(hour).padStart(2, '0');
-    const m = String(minute).padStart(2, '0');
-    onConfirm(`${h}:${m}`);
-  };
+  useEffect(() => {
+    setHour(initial.hour);
+    setMinute(initial.minute);
+    setAmpm(initial.ampm);
+  }, [visible]);
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }} onPress={onCancel}>
-        <View style={{ flex: 1 }} />
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            backgroundColor: Colors.slate900,
-            borderTopLeftRadius: 24,
-            borderTopRightRadius: 24,
-            padding: Spacing.xl,
-            gap: Spacing.lg,
-          }}
-        >
-          <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, textAlign: 'center' }}>
-            Pilih Waktu
-          </Text>
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 28, width: 300, alignItems: 'center', gap: 20 }}>
+          <Text style={{ fontSize: 18, fontWeight: FontWeight.bold, color: BLUE }}>Time</Text>
 
-          <Text style={{ textAlign: 'center', fontSize: 40, fontWeight: FontWeight.bold, color: Colors.primary }}>
-            {String(hour).padStart(2, '0')}:{String(minute).padStart(2, '0')}
-          </Text>
+          {/* Spinners row */}
+          <View style={{ flexDirection: 'row', gap: 24, alignItems: 'center' }}>
+            {/* Hour */}
+            <View style={{ alignItems: 'center', gap: 12 }}>
+              <Pressable onPress={() => setHour(h => (h % 12) + 1)}>
+                <Ionicons name="chevron-up" size={24} color={Colors.grayMed} />
+              </Pressable>
+              <View style={{ borderWidth: 1, borderColor: Colors.grayLight, borderRadius: 8, width: 56, height: 56, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 28, fontWeight: FontWeight.bold, color: '#111' }}>{pad(hour)}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: Colors.grayMed }}>hour</Text>
+              <Pressable onPress={() => setHour(h => h <= 1 ? 12 : h - 1)}>
+                <Ionicons name="chevron-down" size={24} color={Colors.grayMed} />
+              </Pressable>
+            </View>
 
-          {/* Hour selector */}
-          <View>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.textMuted, marginBottom: 8 }}>Jam</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-              {HOURS.map((h) => (
-                <Pressable
-                  key={h}
-                  onPress={() => setHour(h)}
-                  style={{
-                    width: 44, height: 44, borderRadius: 22,
-                    justifyContent: 'center', alignItems: 'center',
-                    backgroundColor: hour === h ? Colors.primary : Colors.grayLight,
-                  }}
-                >
-                  <Text style={{ fontSize: FontSize.sm, color: hour === h ? '#fff' : Colors.textPrimary, fontWeight: hour === h ? FontWeight.bold : FontWeight.regular }}>
-                    {String(h).padStart(2, '0')}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </View>
+            <Text style={{ fontSize: 28, fontWeight: FontWeight.bold, color: '#111', marginBottom: 20 }}>:</Text>
 
-          {/* Minute selector */}
-          <View>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.textMuted, marginBottom: 8 }}>Menit</Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              {MINUTES.map((m) => (
-                <Pressable
-                  key={m}
-                  onPress={() => setMinute(m)}
-                  style={{
-                    flex: 1, paddingVertical: 12,
-                    borderRadius: Radius.md,
-                    justifyContent: 'center', alignItems: 'center',
-                    backgroundColor: minute === m ? Colors.primary : Colors.grayLight,
-                  }}
-                >
-                  <Text style={{ fontSize: FontSize.md, color: minute === m ? '#fff' : Colors.textPrimary, fontWeight: minute === m ? FontWeight.bold : FontWeight.regular }}>
-                    :{String(m).padStart(2, '0')}
-                  </Text>
-                </Pressable>
-              ))}
+            {/* Minute */}
+            <View style={{ alignItems: 'center', gap: 12 }}>
+              <Pressable onPress={() => setMinute(m => (m + 1) % 60)}>
+                <Ionicons name="chevron-up" size={24} color={Colors.grayMed} />
+              </Pressable>
+              <View style={{ borderWidth: 1, borderColor: Colors.grayLight, borderRadius: 8, width: 56, height: 56, justifyContent: 'center', alignItems: 'center' }}>
+                <Text style={{ fontSize: 28, fontWeight: FontWeight.bold, color: '#111' }}>{pad(minute)}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: Colors.grayMed }}>min</Text>
+              <Pressable onPress={() => setMinute(m => m <= 0 ? 59 : m - 1)}>
+                <Ionicons name="chevron-down" size={24} color={Colors.grayMed} />
+              </Pressable>
             </View>
           </View>
 
-          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
-            <Pressable
-              onPress={onCancel}
-              style={{ flex: 1, padding: Spacing.md, borderRadius: Radius.lg, borderWidth: 1, borderColor: Colors.grayMed, alignItems: 'center' }}
-            >
-              <Text style={{ color: Colors.textMuted, fontWeight: FontWeight.semibold }}>Batal</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleConfirm}
-              style={{ flex: 1, padding: Spacing.md, borderRadius: Radius.lg, backgroundColor: Colors.primary, alignItems: 'center' }}
-            >
-              <Text style={{ color: '#fff', fontWeight: FontWeight.bold }}>Konfirmasi</Text>
-            </Pressable>
+          {/* AM / PM */}
+          <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: Colors.grayLight, borderRadius: 8, overflow: 'hidden' }}>
+            {(['AM', 'PM'] as const).map(v => (
+              <Pressable
+                key={v}
+                onPress={() => setAmpm(v)}
+                style={{ paddingHorizontal: 20, paddingVertical: 8, backgroundColor: ampm === v ? BLUE : '#fff' }}
+              >
+                <Text style={{ color: ampm === v ? '#fff' : '#111', fontWeight: FontWeight.semibold }}>{v}</Text>
+              </Pressable>
+            ))}
           </View>
-        </Pressable>
-      </Pressable>
+
+          {/* Buttons */}
+          <Pressable
+            onPress={() => onConfirm(hour, minute, ampm)}
+            style={{ backgroundColor: BLUE, borderRadius: 12, width: '100%', paddingVertical: 14, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#fff', fontWeight: FontWeight.bold, fontSize: 16 }}>Lanjutkan</Text>
+          </Pressable>
+          <Pressable
+            onPress={onCancel}
+            style={{ borderWidth: 1, borderColor: Colors.grayLight, borderRadius: 12, width: '100%', paddingVertical: 14, alignItems: 'center' }}
+          >
+            <Text style={{ color: '#111', fontWeight: FontWeight.semibold, fontSize: 16 }}>Batalkan</Text>
+          </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }
 
+// ── Confirm Popup ──────────────────────────────────────────
+function ConfirmModal({
+  visible,
+  onConfirm,
+  onCancel,
+}: {
+  visible: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade">
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 }}>
+        <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 28, width: '100%', alignItems: 'center', gap: 16 }}>
+          <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: '#111', textAlign: 'center' }}>
+            Apakah kamu yakin ingin mengonfirmasi jadwal ini?
+          </Text>
+          <Text style={{ fontSize: 13, color: Colors.grayMed, textAlign: 'center' }}>
+            Pastikan data jadwal sudah benar sebelum dikonfirmasi
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 12, width: '100%' }}>
+            <Pressable
+              onPress={onCancel}
+              style={{ flex: 1, borderWidth: 1, borderColor: Colors.grayLight, borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}
+            >
+              <Text style={{ fontWeight: FontWeight.semibold, color: '#111' }}>Batalkan</Text>
+            </Pressable>
+            <Pressable
+              onPress={onConfirm}
+              style={{ flex: 1, backgroundColor: GOLD, borderRadius: 12, paddingVertical: 13, alignItems: 'center' }}
+            >
+              <Text style={{ fontWeight: FontWeight.bold, color: '#111' }}>Lanjutkan</Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// ── Calendar ───────────────────────────────────────────────
+function CalendarGrid({
+  year,
+  month,
+  selectedStart,
+  selectedEnd,
+  mode,
+  onSelectDay,
+}: {
+  year: number;
+  month: number;
+  selectedStart: number | null;
+  selectedEnd: number | null;
+  mode: 'harian' | 'rentang';
+  onSelectDay: (day: number) => void;
+}) {
+  const totalDays = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  const today = new Date();
+  const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
+
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: totalDays }, (_, i) => i + 1),
+  ];
+
+  const inRange = (day: number) => {
+    if (mode !== 'rentang' || !selectedStart || !selectedEnd) return false;
+    return day > selectedStart && day < selectedEnd;
+  };
+
+  const isSelected = (day: number) =>
+    day === selectedStart || (mode === 'rentang' && day === selectedEnd);
+
+  const isPast = (day: number) =>
+    isThisMonth && day < today.getDate();
+
+  return (
+    <View>
+      {/* Day headers */}
+      <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+        {DAY_LABELS.map(d => (
+          <View key={d} style={{ flex: 1, alignItems: 'center' }}>
+            <Text style={{ fontSize: 11, fontWeight: FontWeight.bold, color: BLUE }}>{d}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Day cells */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        {cells.map((day, i) => {
+          if (!day) return <View key={`empty-${i}`} style={{ width: `${100 / 7}%`, aspectRatio: 1 }} />;
+
+          const selected = isSelected(day);
+          const ranged = inRange(day);
+          const past = isPast(day);
+
+          return (
+            <Pressable
+              key={day}
+              onPress={() => !past && onSelectDay(day)}
+              style={{
+                width: `${100 / 7}%`,
+                aspectRatio: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: ranged ? BLUE_LIGHT : 'transparent',
+              }}
+            >
+              <View style={{
+                width: 32, height: 32, borderRadius: 16,
+                justifyContent: 'center', alignItems: 'center',
+                backgroundColor: selected ? BLUE : 'transparent',
+              }}>
+                <Text style={{
+                  fontSize: 13,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.regular,
+                  color: past ? '#ccc' : selected ? '#fff' : '#111',
+                }}>
+                  {day}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+// ── Time display string ────────────────────────────────────
+function timeStr(h: number, m: number, ampm: 'AM' | 'PM') {
+  return `${pad(h)}:${pad(m)} ${ampm}`;
+}
+
 // ── Main Screen ────────────────────────────────────────────
-export default function BookingDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>(); // service_id
+export default function BookingScheduleScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
 
   const [service, setService] = useState<Service | null>(null);
   const [provider, setProvider] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Form state
-  const [workDate, setWorkDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [location, setLocation] = useState('');
+  // Calendar state
+  const today = new Date();
+  const [calYear, setCalYear] = useState(today.getFullYear());
+  const [calMonth, setCalMonth] = useState(today.getMonth());
 
-  // Pickers
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
+  // Mode: harian = single day, rentang = date range
+  const [mode, setMode] = useState<'harian' | 'rentang'>('harian');
+
+  // Selected days
+  const [selectedStart, setSelectedStart] = useState<number | null>(null);
+  const [selectedEnd, setSelectedEnd] = useState<number | null>(null);
+
+  // Times
+  const [startTime, setStartTime] = useState({ hour: 10, minute: 0, ampm: 'AM' as 'AM' | 'PM' });
+  const [endTime, setEndTime] = useState({ hour: 10, minute: 0, ampm: 'AM' as 'AM' | 'PM' });
+
+  // Modals
+  const [showTimePicker, setShowTimePicker] = useState<'start' | 'end' | null>(null);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
-    const load = async () => {
+    (async () => {
       try {
-        // Fetch all providers and find the one that owns this service_id
         const providers = await providerService.list();
         for (const p of providers) {
           const svc = p.services?.find((s: Service) => s.id === Number(id));
-          if (svc) {
-            setService(svc);
-            setProvider(p);
-            break;
-          }
+          if (svc) { setService(svc); setProvider(p); break; }
         }
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+      } catch { /* ignore */ }
+      finally { setLoading(false); }
+    })();
   }, [id]);
 
-  if (loading) return <LoadingScreen message="Memuat detail layanan..." />;
-  if (!service || !provider) return <LoadingScreen message="Layanan tidak ditemukan." />;
+  if (loading) return <LoadingScreen message="Memuat layanan..." />;
 
-  const providerName = `${provider.user.first_name} ${provider.user.last_name}`.trim();
-  const categoryName = service.category_name || 'Layanan Jasa';
+  const providerName = provider
+    ? `${provider.user.first_name} ${provider.user.last_name}`.trim()
+    : DUMMY_PROVIDER.name;
+  const roleName = service?.category_name ?? DUMMY_PROVIDER.role;
 
-  const isValid = workDate && startTime && location.trim().length > 0;
-
-  const handleNext = () => {
-    if (!isValid) {
-      Alert.alert('Form Belum Lengkap', 'Harap isi tanggal, waktu, dan lokasi kerja terlebih dahulu.');
-      return;
+  const handleDaySelect = (day: number) => {
+    if (mode === 'harian') {
+      setSelectedStart(day);
+      setSelectedEnd(null);
+    } else {
+      if (!selectedStart || (selectedStart && selectedEnd)) {
+        setSelectedStart(day);
+        setSelectedEnd(null);
+      } else {
+        if (day < selectedStart) {
+          setSelectedEnd(selectedStart);
+          setSelectedStart(day);
+        } else {
+          setSelectedEnd(day);
+        }
+      }
     }
-    // Navigate to payment page with params
+  };
+
+  const prevMonth = () => {
+    if (calMonth === 0) { setCalMonth(11); setCalYear(y => y - 1); }
+    else setCalMonth(m => m - 1);
+  };
+
+  const nextMonth = () => {
+    if (calMonth === 11) { setCalMonth(0); setCalYear(y => y + 1); }
+    else setCalMonth(m => m + 1);
+  };
+
+  const canProceed = selectedStart !== null;
+
+  const handleSelanjutnya = () => {
+    if (!canProceed) return;
+    setShowConfirm(true);
+  };
+
+  const handleConfirmed = () => {
+    setShowConfirm(false);
     router.push({
       pathname: '/booking/payment',
       params: {
-        serviceId: String(service.id),
-        providerId: String(provider.id),
+        serviceId: String(service?.id ?? ''),
+        providerId: String(provider?.id ?? ''),
         providerName,
-        categoryName,
-        price: service.price,
-        workDate,
-        startTime,
-        location,
+        categoryName: roleName,
+        price: service?.price ?? '0',
+        workDate: `${calYear}-${pad(calMonth + 1)}-${pad(selectedStart!)}`,
+        startTime: `${pad(startTime.hour)}:${pad(startTime.minute)}`,
+        location: '',
       },
     });
   };
 
-  // ── Row component for info items ─────────────────────────
-  const InfoRow = ({ icon, label, value }: { icon: string; label: string; value: string }) => (
-    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: Spacing.sm }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Ionicons name={icon as any} size={18} color={Colors.textMuted} />
-        <Text style={{ fontSize: FontSize.sm, color: Colors.textMuted }}>{label}</Text>
-      </View>
-      <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.textPrimary }}>{value}</Text>
-    </View>
-  );
+  // Date label helpers
+  const dayOfWeek = (day: number) => {
+    const d = new Date(calYear, calMonth, day);
+    return ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][d.getDay()];
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cream }}>
-      <Stack.Screen
-        options={{
-          title: 'Detail Pesanan',
-          headerShown: true,
-          headerStyle: { backgroundColor: Colors.cream },
-          headerTintColor: Colors.textPrimary,
-          headerShadowVisible: false,
-          headerBackButtonDisplayMode: 'minimal',
-        }}
-      />
+    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+      <Stack.Screen options={{ headerShown: false }} />
 
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: Spacing.xl, paddingBottom: 140, gap: Spacing.md }}
-          keyboardShouldPersistTaps="handled"
-        >
+      {/* ── Blue Header ── */}
+      <View style={{ backgroundColor: BLUE, paddingTop: Platform.OS === 'ios' ? 56 : 40, paddingBottom: 24, paddingHorizontal: 20 }}>
+        <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
+          <Ionicons name="chevron-back" size={20} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 14 }}>Kembali</Text>
+        </Pressable>
+        <Text style={{ color: '#fff', fontSize: 22, fontWeight: FontWeight.bold, textAlign: 'center' }}>
+          Jadwalkan Sekarang!
+        </Text>
+      </View>
 
-          {/* ── Provider Info Card ── */}
-          <View style={{
-            backgroundColor: Colors.slate900,
-            borderRadius: Radius.xl,
-            padding: Spacing.md,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: Spacing.md,
-            borderWidth: 1, borderColor: Colors.grayLight,
-          }}>
-            <Avatar name={providerName} size={60} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: FontSize.xs, color: Colors.textMuted, fontWeight: FontWeight.medium }}>{categoryName}</Text>
-              <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginTop: 2 }}>
-                {providerName}
-              </Text>
-              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.primary, marginTop: 2 }}>
-                {formatRupiah(service.price)}
-              </Text>
-            </View>
-            {provider.is_verified && (
-              <Ionicons name="checkmark-circle" size={22} color={Colors.success} />
-            )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {/* ── Provider Card ── */}
+        <View style={{ margin: 16, backgroundColor: '#FFF9E6', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+          <Avatar name={providerName} size={56} />
+          <View>
+            <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: '#111' }}>{providerName}</Text>
+            <Text style={{ fontSize: 13, color: Colors.grayMed }}>{roleName}</Text>
           </View>
+        </View>
 
-          {/* ── Schedule Card ── */}
-          <View style={{
-            backgroundColor: Colors.slate900,
-            borderRadius: Radius.xl,
-            borderWidth: 1, borderColor: Colors.grayLight,
-            overflow: 'hidden',
-          }}>
-            {/* Tanggal */}
-            <Pressable
-              onPress={() => setShowDatePicker(true)}
-              style={({ pressed }) => ({
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                padding: Spacing.md,
-                borderBottomWidth: 1, borderBottomColor: Colors.grayLight,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(99,102,241,0.15)', justifyContent: 'center', alignItems: 'center' }}>
-                  <Ionicons name="calendar-outline" size={18} color={Colors.primary} />
-                </View>
-                <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.textPrimary }}>Tanggal</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: FontSize.sm, color: workDate ? Colors.textPrimary : Colors.textMuted }}>
-                  {workDate ? formatDateDisplay(workDate) : 'Pilih tanggal'}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-              </View>
+        {/* ── Calendar Card ── */}
+        <View style={{ marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', padding: 16 }}>
+          {/* Month navigation */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <Pressable onPress={prevMonth} hitSlop={8}>
+              <Ionicons name="chevron-back" size={20} color={BLUE} />
             </Pressable>
-
-            {/* Waktu */}
-            <Pressable
-              onPress={() => setShowTimePicker(true)}
-              style={({ pressed }) => ({
-                flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                padding: Spacing.md,
-                opacity: pressed ? 0.7 : 1,
-              })}
-            >
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(56,189,248,0.15)', justifyContent: 'center', alignItems: 'center' }}>
-                  <Ionicons name="time-outline" size={18} color={Colors.secondary} />
-                </View>
-                <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.textPrimary }}>Waktu</Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: FontSize.sm, color: startTime ? Colors.textPrimary : Colors.textMuted }}>
-                  {startTime || 'Pilih waktu'}
-                </Text>
-                <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-              </View>
+            <Text style={{ fontSize: 15, fontWeight: FontWeight.bold, color: BLUE }}>
+              {MONTH_NAMES[calMonth]} {calYear}
+            </Text>
+            <Pressable onPress={nextMonth} hitSlop={8}>
+              <Ionicons name="chevron-forward" size={20} color={BLUE} />
             </Pressable>
           </View>
 
-          {/* ── Location Input (Map-style) ── */}
-          <View style={{
-            backgroundColor: Colors.slate900,
-            borderRadius: Radius.xl,
-            borderWidth: 1, borderColor: Colors.grayLight,
-            overflow: 'hidden',
-          }}>
-            {/* Location input */}
-            <View style={{
-              flexDirection: 'row', alignItems: 'center', gap: 10,
-              padding: Spacing.md,
-              borderBottomWidth: 1, borderBottomColor: Colors.grayLight,
-            }}>
-              <Ionicons name="location-outline" size={20} color={Colors.textMuted} />
-              <TextInput
-                value={location}
-                onChangeText={setLocation}
-                placeholder="Masukkan Lokasi"
-                placeholderTextColor={Colors.textMuted}
-                style={{ flex: 1, fontSize: FontSize.sm, color: Colors.textPrimary, paddingVertical: 0 }}
-                returnKeyType="done"
-              />
-              {location.length > 0 && (
-                <Pressable onPress={() => setLocation('')}>
-                  <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+          <CalendarGrid
+            year={calYear}
+            month={calMonth}
+            selectedStart={selectedStart}
+            selectedEnd={selectedEnd}
+            mode={mode}
+            onSelectDay={handleDaySelect}
+          />
+
+          {/* ── Waktu / Mode toggle ── */}
+          <View style={{ marginTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontSize: 15, fontWeight: FontWeight.bold, color: BLUE, textDecorationLine: 'underline' }}>Waktu</Text>
+            <View style={{ flexDirection: 'row', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 8, overflow: 'hidden' }}>
+              {(['harian', 'rentang'] as const).map(m => (
+                <Pressable
+                  key={m}
+                  onPress={() => { setMode(m); setSelectedEnd(null); }}
+                  style={{
+                    paddingHorizontal: 14, paddingVertical: 6,
+                    backgroundColor: mode === m ? '#F3F4F6' : '#fff',
+                  }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: mode === m ? FontWeight.bold : FontWeight.regular, color: '#111', textTransform: 'capitalize' }}>
+                    {m.charAt(0).toUpperCase() + m.slice(1)}
+                  </Text>
                 </Pressable>
-              )}
-            </View>
-
-            {/* Map placeholder */}
-            <View style={{ height: 180, backgroundColor: '#1a2a3a', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-              {/* Simulated map grid */}
-              <View style={{ position: 'absolute', inset: 0 }}>
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <View key={i} style={{ position: 'absolute', left: 0, right: 0, top: i * 25, height: 1, backgroundColor: 'rgba(100,150,200,0.15)' }} />
-                ))}
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <View key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: i * 50, width: 1, backgroundColor: 'rgba(100,150,200,0.15)' }} />
-                ))}
-              </View>
-
-              {/* Map pin */}
-              {location ? (
-                <View style={{ alignItems: 'center' }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: Colors.error, justifyContent: 'center', alignItems: 'center', shadowColor: Colors.error, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 8 }}>
-                    <Ionicons name="location" size={24} color="#fff" />
-                  </View>
-                  <View style={{ width: 10, height: 10, backgroundColor: 'rgba(239,68,68,0.3)', borderRadius: 5, marginTop: 4 }} />
-                  <View style={{ marginTop: 8, backgroundColor: 'rgba(0,0,0,0.7)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: Radius.pill }}>
-                    <Text style={{ color: '#fff', fontSize: FontSize.xs, fontWeight: FontWeight.medium }} numberOfLines={1}>
-                      {location}
-                    </Text>
-                  </View>
-                </View>
-              ) : (
-                <View style={{ alignItems: 'center', gap: 8 }}>
-                  <Ionicons name="map-outline" size={40} color="rgba(100,150,200,0.4)" />
-                  <Text style={{ fontSize: FontSize.xs, color: 'rgba(100,150,200,0.5)' }}>Masukkan lokasi untuk melihat peta</Text>
-                </View>
-              )}
+              ))}
             </View>
           </View>
 
-        </ScrollView>
-      </KeyboardAvoidingView>
+          {/* ── Time rows (Rentang mode) ── */}
+          {mode === 'rentang' && selectedStart ? (
+            <View style={{ marginTop: 14, gap: 10 }}>
+              {/* Start row */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36 }}>
+                  <Text style={{ fontSize: 11, color: Colors.grayMed }}>Dari</Text>
+                  <Text style={{ fontSize: 22, fontWeight: FontWeight.bold, color: '#111' }}>{selectedStart}</Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: FontWeight.medium, color: '#111' }}>{MONTH_NAMES[calMonth]} {calYear}</Text>
+                  <Text style={{ fontSize: 12, color: Colors.grayMed }}>{dayOfWeek(selectedStart)}</Text>
+                </View>
+                <View style={{ flex: 1 }} />
+                <Pressable onPress={() => setShowTimePicker('start')}>
+                  <Ionicons name="time-outline" size={20} color="#555" />
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowTimePicker('start')}
+                  style={{ backgroundColor: BLUE, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: FontWeight.bold, fontSize: 13 }}>
+                    {timeStr(startTime.hour, startTime.minute, startTime.ampm)}
+                  </Text>
+                </Pressable>
+              </View>
 
-      {/* ── Fixed Bottom CTA ── */}
+              {/* End row */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 36 }}>
+                  <Text style={{ fontSize: 11, color: Colors.grayMed }}>Sampai</Text>
+                  <Text style={{ fontSize: 22, fontWeight: FontWeight.bold, color: '#111' }}>{selectedEnd ?? '—'}</Text>
+                </View>
+                <View>
+                  <Text style={{ fontSize: 13, fontWeight: FontWeight.medium, color: '#111' }}>{MONTH_NAMES[calMonth]} {calYear}</Text>
+                  <Text style={{ fontSize: 12, color: Colors.grayMed }}>{selectedEnd ? dayOfWeek(selectedEnd) : ''}</Text>
+                </View>
+                <View style={{ flex: 1 }} />
+                <Pressable onPress={() => setShowTimePicker('end')}>
+                  <Ionicons name="time-outline" size={20} color="#555" />
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowTimePicker('end')}
+                  style={{ backgroundColor: BLUE, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 }}
+                >
+                  <Text style={{ color: '#fff', fontWeight: FontWeight.bold, fontSize: 13 }}>
+                    {timeStr(endTime.hour, endTime.minute, endTime.ampm)}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : mode === 'harian' && selectedStart ? (
+            /* Single day time row */
+            <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <View style={{ width: 36 }}>
+                <Text style={{ fontSize: 11, color: Colors.grayMed }}>Dari</Text>
+                <Text style={{ fontSize: 22, fontWeight: FontWeight.bold, color: '#111' }}>{selectedStart}</Text>
+              </View>
+              <View>
+                <Text style={{ fontSize: 13, fontWeight: FontWeight.medium, color: '#111' }}>{MONTH_NAMES[calMonth]} {calYear}</Text>
+                <Text style={{ fontSize: 12, color: Colors.grayMed }}>{dayOfWeek(selectedStart)}</Text>
+              </View>
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={() => setShowTimePicker('start')}>
+                <Ionicons name="time-outline" size={20} color="#555" />
+              </Pressable>
+              <Pressable
+                onPress={() => setShowTimePicker('start')}
+                style={{ backgroundColor: BLUE, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 7 }}
+              >
+                <Text style={{ color: '#fff', fontWeight: FontWeight.bold, fontSize: 13 }}>
+                  {timeStr(startTime.hour, startTime.minute, startTime.ampm)}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+      </ScrollView>
+
+      {/* ── Bottom CTA ── */}
       <View style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: Colors.cream,
-        paddingHorizontal: Spacing.xl,
-        paddingTop: Spacing.md,
-        paddingBottom: Platform.OS === 'ios' ? 36 : Spacing.xl,
-        borderTopWidth: 1, borderTopColor: Colors.grayLight,
+        paddingHorizontal: 20,
+        paddingTop: 12,
+        paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+        backgroundColor: '#fff',
+        borderTopWidth: 1, borderTopColor: '#F0F0F0',
       }}>
         <Pressable
-          onPress={handleNext}
+          onPress={handleSelanjutnya}
           style={({ pressed }) => ({
-            backgroundColor: isValid ? Colors.warning : Colors.grayMed,
-            borderRadius: Radius.xl,
+            backgroundColor: GOLD,
+            borderRadius: 40,
             paddingVertical: 16,
             alignItems: 'center',
             opacity: pressed ? 0.85 : 1,
           })}
         >
-          <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: isValid ? '#1a1a1a' : Colors.textMuted }}>
-            Proses Pesanan
-          </Text>
+          <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: '#111' }}>Selanjutnya →</Text>
         </Pressable>
       </View>
 
-      {/* ── Pickers ── */}
-      <DatePickerModal
-        visible={showDatePicker}
-        value={workDate}
-        onConfirm={(date) => { setWorkDate(date); setShowDatePicker(false); }}
-        onCancel={() => setShowDatePicker(false)}
-      />
+      {/* ── Time Picker Modal ── */}
       <TimePickerModal
-        visible={showTimePicker}
-        value={startTime}
-        onConfirm={(time) => { setStartTime(time); setShowTimePicker(false); }}
-        onCancel={() => setShowTimePicker(false)}
+        visible={showTimePicker !== null}
+        initial={showTimePicker === 'end' ? endTime : startTime}
+        onConfirm={(h, m, ap) => {
+          if (showTimePicker === 'start') setStartTime({ hour: h, minute: m, ampm: ap });
+          else setEndTime({ hour: h, minute: m, ampm: ap });
+          setShowTimePicker(null);
+        }}
+        onCancel={() => setShowTimePicker(null)}
+      />
+
+      {/* ── Confirm Modal ── */}
+      <ConfirmModal
+        visible={showConfirm}
+        onConfirm={handleConfirmed}
+        onCancel={() => setShowConfirm(false)}
       />
     </View>
   );

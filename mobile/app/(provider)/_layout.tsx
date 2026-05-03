@@ -1,16 +1,29 @@
 import { useEffect, useState } from 'react';
-import { Keyboard, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  Image,
+} from 'react-native';
 import { Tabs } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+
+const icons = {
+  home: require('@/assets/images/home alt 1.png'),
+  chat: require('@/assets/images/chat alt 11.png'),
+  order: require('@/assets/images/order alt 11.png'),
+  user: require('@/assets/images/user alt 11.png'),
+};
 
 const BLUE = '#315BE8';
 
-const tabMeta: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }> = {
-  index: { label: 'Beranda', icon: 'grid-outline', activeIcon: 'grid' },
-  services: { label: 'Layanan', icon: 'briefcase-outline', activeIcon: 'briefcase' },
-  messages: { label: 'Chat', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
-  schedule: { label: 'Jadwal', icon: 'calendar-outline', activeIcon: 'calendar' },
-  profile: { label: 'Profil', icon: 'person-outline', activeIcon: 'person' },
+const tabMeta: Record<string, { label: string; icon: any }> = {
+  index:   { label: 'Beranda', icon: icons.home },
+  chat:    { label: 'Chat',    icon: icons.chat },
+  pesanan: { label: 'Pesanan', icon: icons.order },
+  profile: { label: 'Akun',   icon: icons.user },
 };
 
 function ProviderTabBar({ state, navigation }: any) {
@@ -32,8 +45,9 @@ function ProviderTabBar({ state, navigation }: any) {
       <View style={styles.bar}>
         {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
-          const meta = tabMeta[route.name] || { label: route.name, icon: 'help-circle-outline', activeIcon: 'help-circle' };
-          
+          const meta = tabMeta[route.name];
+          if (!meta) return null;
+
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!isFocused && !event.defaultPrevented) navigation.navigate(route.name);
@@ -42,7 +56,10 @@ function ProviderTabBar({ state, navigation }: any) {
           return (
             <Pressable key={route.key} onPress={onPress} style={styles.item}>
               <View style={[styles.iconWrap, isFocused && styles.activeIconWrap]}>
-                <Ionicons name={isFocused ? meta.activeIcon : meta.icon} size={isFocused ? 32 : 26} color="#FFFFFF" />
+                <Image
+                  source={meta.icon}
+                  style={[styles.tabIcon, isFocused && styles.activeTabIcon]}
+                />
               </View>
               <Text style={[styles.label, isFocused && styles.activeLabel]}>{meta.label}</Text>
             </Pressable>
@@ -56,11 +73,13 @@ function ProviderTabBar({ state, navigation }: any) {
 export default function ProviderLayout() {
   return (
     <Tabs tabBar={(props) => <ProviderTabBar {...props} />} screenOptions={{ headerShown: false }}>
-      <Tabs.Screen name="index" />
-      <Tabs.Screen name="services" />
-      <Tabs.Screen name="messages" />
-      <Tabs.Screen name="schedule" />
-      <Tabs.Screen name="profile" />
+      <Tabs.Screen name="index" options={{ title: 'Beranda' }} />
+      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="pesanan" options={{ title: 'Pesanan' }} />
+      <Tabs.Screen name="profile" options={{ title: 'Akun' }} />
+      <Tabs.Screen name="services" options={{ href: null }} />
+      <Tabs.Screen name="schedule" options={{ href: null }} />
+      <Tabs.Screen name="messages" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -76,6 +95,7 @@ const styles = StyleSheet.create({
   },
   bar: {
     width: '100%',
+    maxWidth: 430,
     height: 78,
     backgroundColor: BLUE,
     flexDirection: 'row',
@@ -84,22 +104,22 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   item: {
-    flex: 1,
+    width: 86,
     alignItems: 'center',
     justifyContent: 'flex-end',
   },
   iconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 3,
   },
   activeIconWrap: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
+    width: 62,
+    height: 62,
+    borderRadius: 31,
     marginTop: -34,
     marginBottom: 1,
     backgroundColor: BLUE,
@@ -111,10 +131,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     elevation: 9,
   },
+  tabIcon: {
+    width: 26,
+    height: 26,
+    resizeMode: 'contain',
+    tintColor: '#FFFFFF',
+  },
+  activeTabIcon: {
+    width: 32,
+    height: 32,
+  },
   label: {
     color: '#E8EEFF',
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: 11,
   },
   activeLabel: {
     color: '#FFFFFF',
