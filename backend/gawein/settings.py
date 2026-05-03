@@ -20,6 +20,7 @@ ALLOWED_HOSTS = _get_env_list("DJANGO_ALLOWED_HOSTS")
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'main',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -64,7 +65,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'gawein.wsgi.application'
+ASGI_APPLICATION = 'gawein.asgi.application'
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 # Database
 

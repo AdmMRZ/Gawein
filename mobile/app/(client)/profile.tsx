@@ -314,7 +314,7 @@ function EditProfile(props: {
           </View>
         </View>
 
-        <FormInput label="Nama Lengkap" value={props.fullName} onChangeText={props.onName} icon="person-circle-outline" />
+        <FormInput label="Nama Lengkap" value={props.fullName} onChangeText={props.onName} icon="person-outline" />
         <GenderPicker value={props.gender} onChange={props.onGender} />
         <FormInput label="Old Password" value={props.oldPassword} onChangeText={props.onOldPassword} secureTextEntry icon="lock-closed-outline" />
         <View style={styles.splitRow}>

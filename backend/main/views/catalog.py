@@ -4,8 +4,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from main.permissions import IsAdmin
-from main.serializers.catalog import CategorySerializer
+from main.serializers.catalog import CategorySerializer, CitySerializer
 from main.services.catalog import CatalogService
+from main.models import City
 
 
 class CategoryListCreateView(APIView):
@@ -54,3 +55,9 @@ class CategoryDetailView(APIView):
     def delete(self, request, pk):
         CatalogService.delete_category(pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class CityListView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request):
+        cities = City.objects.filter(is_active=True).select_related('province')
+        return Response(CitySerializer(cities, many=True).data, status=status.HTTP_200_OK)

@@ -4,6 +4,7 @@ import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { providerService } from '@/services/provider';
 import { reviewService } from '@/services/review';
+import { chatService } from '@/services/chat';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import type { ProviderProfile, Review } from '@/types';
 
@@ -34,6 +35,8 @@ export default function ProviderDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'scope' | 'limitations'>('scope');
   const [showAllReviews, setShowAllReviews] = useState(false);
+
+  const [isChatting, setIsChatting] = useState(false);
 
   useEffect(() => {
     Promise.all([providerService.getDetail(Number(id)), reviewService.list(Number(id))])
@@ -89,7 +92,9 @@ export default function ProviderDetailScreen() {
         </View>
 
         <View style={{ alignItems: 'center', marginTop: -66 }}>
-          <Image source={{ uri: workerPhotoFor(provider, Number(id)) }} style={{ width: 118, height: 118, borderRadius: 59, borderWidth: 4, borderColor: '#FFFFFF' }} />
+          <View style={{ width: 118, height: 118, borderRadius: 59, borderWidth: 4, borderColor: '#FFFFFF', backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="person" size={80} color="#CCCCCC" />
+          </View>
           <Text style={{ color: TEXT, fontSize: 25, fontWeight: '900', marginTop: 28 }}>{fullName}</Text>
           <Text style={{ color: TEXT, fontSize: 14, marginTop: 4 }}>{provider.age || 33} tahun</Text>
         </View>
@@ -121,7 +126,22 @@ export default function ProviderDetailScreen() {
           </View>
 
           <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
-            <Pressable onPress={() => Alert.alert('Pesan', `Mulai chat dengan ${fullName}`)} style={styles.bottomButton}>
+            <Pressable 
+              onPress={async () => {
+                if (isChatting) return;
+                setIsChatting(true);
+                try {
+                  const room = await chatService.getOrCreateRoom(provider.user.id);
+                  router.push(`/messages/${room.id}` as any);
+                } catch (error) {
+                  Alert.alert('Error', 'Gagal membuka chat');
+                } finally {
+                  setIsChatting(false);
+                }
+              }} 
+              disabled={isChatting}
+              style={[styles.bottomButton, isChatting && { opacity: 0.7 }]}
+            >
               <Ionicons name="chatbubble-ellipses-outline" size={18} color={TEXT} />
               <Text style={styles.bottomText}>Kirim Pesan</Text>
             </Pressable>
@@ -165,7 +185,9 @@ function Segment({ label, active, onPress }: { label: string; active: boolean; o
 function ReviewCard({ review, index }: { review: Review; index: number }) {
   return (
     <View style={{ minHeight: 66, borderRadius: 13, borderWidth: 1, borderColor: BORDER, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 12, backgroundColor: '#FFFFFF' }}>
-      <Image source={{ uri: reviewerPhoto(index) }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' }}>
+        <Ionicons name="person" size={28} color="#CCCCCC" />
+      </View>
       <View style={{ flex: 1 }}>
         <Text style={{ color: TEXT, fontSize: 16, fontWeight: '900' }}>
           {review.client_name}, <Text style={{ fontSize: 13, fontWeight: '500' }}>{formatMonth(review.created_at)}</Text>
@@ -208,37 +230,7 @@ function formatMonth(value: string) {
   return new Date(value).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
 }
 
-function workerPhotoFor(provider: ProviderProfile, index: number) {
-  const fullName = `${provider.user.first_name} ${provider.user.last_name}`.toLowerCase();
-  if (fullName.includes('joko')) return malePhotos[1];
-  const isFemale = provider.gender?.toLowerCase().includes('perempuan');
-  return isFemale ? femalePhotos[index % femalePhotos.length] : malePhotos[index % malePhotos.length];
-}
 
-const malePhotos = [
-    'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=300&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&h=300&fit=crop',
-    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&h=300&fit=crop',
-];
-
-const femalePhotos = [
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&h=300&fit=crop',
-  'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&h=300&fit=crop',
-];
-
-function reviewerPhoto(index: number) {
-  const ids = [
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop',
-    'https://images.unsplash.com/photo-1548142813-c348350df52b?w=100&h=100&fit=crop',
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop',
-    'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=100&h=100&fit=crop',
-    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=100&h=100&fit=crop',
-  ];
-  return ids[index % ids.length];
-}
 
 function demoProvider(id: number): ProviderProfile {
   return {

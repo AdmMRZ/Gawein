@@ -20,7 +20,7 @@ class ProviderSearchView(APIView):
         params = {
             'keyword': request.query_params.get('keyword'),
             'category': self._parse_int(request.query_params.get('category')),
-            'location': request.query_params.get('location'),
+            'city_id': request.query_params.get('city_id'),
             'min_price': self._parse_float(request.query_params.get('min_price')),
             'max_price': self._parse_float(request.query_params.get('max_price')),
             'gender': request.query_params.get('gender'),

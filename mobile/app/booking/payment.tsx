@@ -12,7 +12,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { schedulingService } from '@/services/scheduling';
 import { hiringService } from '@/services/hiring';
-import { ApiError } from '@/services/api';
+import { ApiError, generateIdempotencyKey } from '@/services/api';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
 
 // ── Format Rupiah ──────────────────────────────────────────
@@ -125,20 +125,28 @@ export default function PaymentScreen() {
     setShowConfirmModal(false);
     setLoading(true);
     setError('');
+
+    // Generate unique session key for this recruitment attempt
+    const sessionKey = generateIdempotencyKey();
+
     try {
       // Step 1: Create booking (links service)
-      const booking = await schedulingService.createBooking({
-        service: Number(params.serviceId),
-      });
+      const booking = await schedulingService.createBooking(
+        { service: Number(params.serviceId) },
+        { idempotencyKey: `bk-${sessionKey}` }
+      );
 
       // Step 2: Create hiring with booking reference
-      const hiring = await hiringService.create({
-        booking_id: booking.id,
-        agreed_price: servicePrice,
-        work_date: params.workDate,
-        location: params.location ?? '',
-        notes: `Waktu: ${params.startTime ?? ''}`,
-      });
+      const hiring = await hiringService.create(
+        {
+          booking_id: booking.id,
+          agreed_price: servicePrice,
+          work_date: params.workDate,
+          location: params.location ?? '',
+          notes: `Waktu: ${params.startTime ?? ''}`,
+        },
+        { idempotencyKey: `hi-${sessionKey}` }
+      );
 
       // Step 3: Navigate to success page
       router.replace({

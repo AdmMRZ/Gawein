@@ -7,7 +7,7 @@ const BLUE = '#315BE8';
 
 const tabMeta: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }> = {
   index: { label: 'Beranda', icon: 'home-outline', activeIcon: 'home' },
-  search: { label: 'Chat', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
+  messages: { label: 'Chat', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
   history: { label: 'Pesanan', icon: 'reader-outline', activeIcon: 'reader' },
   profile: { label: 'Akun', icon: 'person-outline', activeIcon: 'person' },
 };
@@ -55,7 +55,7 @@ export default function ClientLayout() {
   return (
     <Tabs tabBar={(props) => <GaweInTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" />
-      <Tabs.Screen name="search" />
+      <Tabs.Screen name="messages" />
       <Tabs.Screen name="history" />
       <Tabs.Screen name="profile" />
     </Tabs>

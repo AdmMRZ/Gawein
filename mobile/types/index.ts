@@ -29,7 +29,8 @@ export interface AuthResponse {
 export interface ClientProfile {
   id: number;
   phone: string;
-  location: string;
+  city: string;
+  city_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -40,7 +41,8 @@ export interface ProviderProfile {
   bio: string;
   gender: string;
   age: number | null;
-  location: string;
+  city: string;
+  city_id: number | null;
   years_of_experience: number;
   is_verified: boolean;
   verification_status: 'pending' | 'verified' | 'rejected';
@@ -61,7 +63,8 @@ export interface ProviderProfileData {
   bio: string;
   gender: string;
   age: number | null;
-  location: string;
+  city: string;
+  city_id: number | null;
   years_of_experience: number;
   is_verified: boolean;
   verification_status: string;
@@ -75,6 +78,7 @@ export interface Category {
   id: number;
   name: string;
   description: string;
+  icon_name?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -87,11 +91,13 @@ export interface Service {
   provider: number;
   category: number | null;
   category_name: string | null;
+  category_icon?: string | null;
   provider_name: string;
   title: string;
   description: string;
   price: string;
-  location: string;
+  city: string;
+  city_id: number | null;
   service_scope: string;
   service_limitations: string;
   is_active: boolean;
@@ -104,7 +110,8 @@ export interface ServiceCreateData {
   title: string;
   description: string;
   price: number;
-  location: string;
+  city: string;
+  city_id: number | null;
   service_scope?: string;
   service_limitations?: string;
   is_active?: boolean;
@@ -159,7 +166,8 @@ export interface Hiring {
   booking: number | null;
   agreed_price: string;
   work_date: string;
-  location: string;
+  city: string;
+  city_id: number | null;
   notes: string;
   status: HiringStatus;
   has_review: boolean;

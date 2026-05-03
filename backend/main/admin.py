@@ -23,19 +23,19 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'phone', 'location']
-    search_fields = ['user__email', 'phone', 'location']
+    list_display = ['user', 'phone', 'city']
+    search_fields = ['user__email', 'phone', 'city__name']
 
 
 @admin.register(ProviderProfile)
 class ProviderProfileAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'gender', 'age', 'location',
+        'user', 'gender', 'age', 'city',
         'years_of_experience', 'is_verified', 'verification_status',
         'rating_average', 'total_reviews',
     ]
     list_filter = ['is_verified', 'verification_status', 'gender']
-    search_fields = ['user__email', 'bio', 'location']
+    search_fields = ['user__email', 'bio', 'city__name']
 
 
 @admin.register(Category)

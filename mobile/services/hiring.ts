@@ -8,10 +8,11 @@ export const hiringService = {
     work_date: string;
     location?: string;
     notes?: string;
-  }): Promise<Hiring> {
+  }, options?: { idempotencyKey?: string }): Promise<Hiring> {
     return api<Hiring>('/hirings/', {
       method: 'POST',
       body: data as unknown as Record<string, unknown>,
+      idempotencyKey: options?.idempotencyKey,
     });
   },
 

@@ -96,6 +96,7 @@ interface RequestOptions {
   body?: Record<string, unknown>;
   authenticated?: boolean;
   params?: Record<string, string | number | boolean | undefined>;
+  idempotencyKey?: string;
 }
 
 export async function api<T = unknown>(
@@ -127,6 +128,10 @@ export async function api<T = unknown>(
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
+  }
+
+  if (options.idempotencyKey) {
+    headers['Idempotency-Key'] = options.idempotencyKey;
   }
 
   // Execute request
@@ -172,4 +177,11 @@ export async function api<T = unknown>(
   }
 
   return data as T;
+}
+
+/**
+ * Generates a unique idempotency key for preventing duplicate requests.
+ */
+export function generateIdempotencyKey(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 }
