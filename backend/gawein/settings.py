@@ -20,7 +20,6 @@ ALLOWED_HOSTS = _get_env_list("DJANGO_ALLOWED_HOSTS")
 # Application definition
 
 INSTALLED_APPS = [
-    'daphne',
     'main',
     'django.contrib.admin',
     'django.contrib.auth',
