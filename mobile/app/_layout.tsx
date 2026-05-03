@@ -1,11 +1,21 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import 'react-native-reanimated';
 import { AuthProvider } from '@/contexts/auth-context';
 import { useAuth } from '@/hooks/use-auth';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Colors } from '@/constants/theme';
+import { useFonts } from 'expo-font';
+import {
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_700Bold,
+  DMSans_700Bold_Italic,
+} from '@expo-google-fonts/dm-sans';
+import * as SplashScreen from 'expo-splash-screen';
+
+SplashScreen.preventAutoHideAsync();
 
 function RootNavigation() {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -156,6 +166,27 @@ function RootNavigation() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    'DMSans-Regular': DMSans_400Regular,
+    'DMSans-Medium': DMSans_500Medium,
+    'DMSans-Bold': DMSans_700Bold,
+    'DMSans-BoldItalic': DMSans_700Bold_Italic,
+  });
+
+  const onLayoutReady = useCallback(async () => {
+    if (fontsLoaded) {
+      await SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    onLayoutReady();
+  }, [onLayoutReady]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <AuthProvider>
       <RootNavigation />
