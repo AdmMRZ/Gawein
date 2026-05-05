@@ -14,7 +14,7 @@ const BLUE = '#315BE8';
 
 const tabMeta: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; activeIcon: keyof typeof Ionicons.glyphMap }> = {
   index: { label: 'Beranda', icon: 'home-outline', activeIcon: 'home' },
-  chat: { label: 'Chat', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
+  messages: { label: 'Chat', icon: 'chatbubble-ellipses-outline', activeIcon: 'chatbubble-ellipses' },
   pesanan: { label: 'Pesanan', icon: 'reader-outline', activeIcon: 'reader' },
   profile: { label: 'Akun', icon: 'person-outline', activeIcon: 'person' },
 };
@@ -64,12 +64,12 @@ export default function ProviderLayout() {
   return (
     <Tabs tabBar={(props) => <ProviderTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: 'Beranda' }} />
-      <Tabs.Screen name="chat" options={{ title: 'Chat' }} />
+      <Tabs.Screen name="messages" options={{ title: 'Chat' }} />
       <Tabs.Screen name="pesanan" options={{ title: 'Pesanan' }} />
       <Tabs.Screen name="profile" options={{ title: 'Akun' }} />
       <Tabs.Screen name="services" options={{ href: null }} />
       <Tabs.Screen name="schedule" options={{ href: null }} />
-      <Tabs.Screen name="messages" options={{ href: null }} />
+      <Tabs.Screen name="chat" options={{ href: null }} />
     </Tabs>
   );
 }
