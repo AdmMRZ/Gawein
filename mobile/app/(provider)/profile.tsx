@@ -49,7 +49,10 @@ export default function ProviderProfileScreen() {
 
   // Form States
   const [fullName, setFullName] = useState('');
+<<<<<<< HEAD
   const [phone, setPhone] = useState('');
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
   const [gender, setGender] = useState<GenderValue>('Laki-laki');
   const [bio, setBio] = useState('');
   const [age, setAge] = useState('');
@@ -61,7 +64,10 @@ export default function ProviderProfileScreen() {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+<<<<<<< HEAD
   const [successMessage, setSuccessMessage] = useState('');
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
 
   const displayName = useMemo(() => {
     const name = `${user?.first_name || ''} ${user?.last_name || ''}`.trim();
@@ -79,7 +85,10 @@ export default function ProviderProfileScreen() {
       const p = res.profile as ProviderProfileData;
       setProviderProfile(p);
       setFullName(displayName);
+<<<<<<< HEAD
       setPhone(user?.phone || '');
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
       setGender(normalizeGender(user?.gender));
       setBio(p?.bio || '');
       setAge(p?.age?.toString() || '');
@@ -125,7 +134,10 @@ export default function ProviderProfileScreen() {
       await userService.updateProfile({
         first_name: firstName,
         last_name: lastNameParts.join(' '),
+<<<<<<< HEAD
         phone,
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
         gender,
         bio,
         age: age ? parseInt(age, 10) : null,
@@ -143,7 +155,11 @@ export default function ProviderProfileScreen() {
 
       await refreshProfile();
       await loadData();
+<<<<<<< HEAD
       setSuccessMessage('Profil anda telah berhasil diperbarui');
+=======
+      Alert.alert('Berhasil', 'Profil anda telah diperbarui.');
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
       goProfile();
     } catch (error: any) {
       Alert.alert('Gagal', error?.message || 'Tidak bisa menyimpan profil.');
@@ -212,7 +228,10 @@ export default function ProviderProfileScreen() {
         <EditProfile
           {...{
             fullName, fullNameSet: setFullName,
+<<<<<<< HEAD
             phone, phoneSet: setPhone,
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
             gender, genderSet: setGender,
             bio, bioSet: setBio,
             age, ageSet: setAge,
@@ -253,6 +272,7 @@ export default function ProviderProfileScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               {cities.map(c => (
                 <Pressable key={c.id} style={styles.cityItem}
+<<<<<<< HEAD
                   onPress={() => {
                     setCityId(c.id);
                     setCityName(c.name);
@@ -263,6 +283,11 @@ export default function ProviderProfileScreen() {
                     <Text style={styles.provinceText}>{c.province_name}</Text>
                   </View>
                   {cityId === c.id && <Ionicons name="checkmark-circle" size={20} color={BLUE} />}
+=======
+                  onPress={() => { setCityId(c.id); setCityName(c.name); setCityModalVisible(false); }}>
+                  <Text style={styles.cityItemName}>{c.name}</Text>
+                  <Text style={styles.cityItemProvince}>{c.province_name}</Text>
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
                 </Pressable>
               ))}
             </ScrollView>
@@ -418,7 +443,10 @@ function EditProfile(props: any) {
         </View>
 
         <FormInput label="Nama Lengkap" value={props.fullName} onChangeText={props.fullNameSet} icon="person-outline" />
+<<<<<<< HEAD
         <FormInput label="Nomor HP" value={props.phone} onChangeText={props.phoneSet} keyboardType="phone-pad" icon="call-outline" />
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
         <GenderPicker value={props.gender} onChange={props.genderSet} />
         
         <View style={styles.splitRow}>
@@ -528,6 +556,7 @@ function normalizeGender(value?: string): GenderValue {
   return 'Perempuan';
 }
 
+<<<<<<< HEAD
 function SuccessModal({ message, onClose }: { message: string; onClose: () => void }) {
   if (!message) return null;
   return (
@@ -548,6 +577,8 @@ function SuccessModal({ message, onClose }: { message: string; onClose: () => vo
   );
 }
 
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFF' },
   header: { height: 140, backgroundColor: BLUE, borderBottomLeftRadius: 20, borderBottomRightRadius: 20, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 25 },
@@ -571,7 +602,11 @@ const styles = StyleSheet.create({
   actionStack: { width: '100%', marginTop: 40, gap: 15 },
   primaryButton: { height: 50, borderRadius: 25, alignItems: 'center', justifyContent: 'center' },
   primaryButtonText: { fontSize: 16, fontWeight: '900' },
+<<<<<<< HEAD
   formContent: { paddingHorizontal: 25, paddingTop: 20, paddingBottom: 120 },
+=======
+  formContent: { paddingHorizontal: 25, paddingTop: 20, paddingBottom: 100 },
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
   editAvatarWrap: { alignSelf: 'center', marginBottom: 20 },
   cameraBadge: { position: 'absolute', right: 0, bottom: 4, width: 28, height: 28, borderRadius: 14, backgroundColor: '#111', borderWidth: 2, borderColor: '#FFF', alignItems: 'center', justifyContent: 'center' },
   inputGroup: { marginBottom: 15 },
@@ -586,11 +621,19 @@ const styles = StyleSheet.create({
   genderText: { color: '#777', fontWeight: '600' },
   genderTextActive: { color: '#FFF' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+<<<<<<< HEAD
   cityBox: { backgroundColor: '#FFF', width: '100%', height: '70%', borderRadius: 25, padding: 25, position: 'absolute', bottom: 0 },
   modalTitle: { fontSize: 18, fontWeight: '900', color: '#111', marginBottom: 10 },
   cityItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cityText: { fontSize: 16, color: '#111', fontWeight: '600' },
   provinceText: { fontSize: 12, color: '#999', marginTop: 2 },
+=======
+  cityBox: { backgroundColor: '#FFF', width: '100%', height: '70%', borderRadius: 25, padding: 25 },
+  modalTitle: { fontSize: 18, fontWeight: '900', color: '#111', marginBottom: 5 },
+  cityItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE' },
+  cityItemName: { fontSize: 16, color: '#111', fontWeight: '600' },
+  cityItemProvince: { fontSize: 12, color: '#999', marginTop: 2 },
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
   cardsContent: { paddingHorizontal: 25, paddingTop: 20, paddingBottom: 100 },
   cardItem: { marginBottom: 20 },
   blackCard: { backgroundColor: '#111', borderRadius: 20, padding: 20, height: 160, justifyContent: 'space-between' },
@@ -602,8 +645,11 @@ const styles = StyleSheet.create({
   cancelDelete: { flex: 1, height: 44, borderRadius: 22, backgroundColor: '#EEE', alignItems: 'center', justifyContent: 'center' },
   continueDelete: { flex: 1, height: 44, borderRadius: 22, backgroundColor: '#EF4444', alignItems: 'center', justifyContent: 'center' },
   deleteActionText: { fontWeight: '700', color: '#111' },
+<<<<<<< HEAD
   successBox: { backgroundColor: '#FFF', width: '85%', padding: 30, borderRadius: 30, alignItems: 'center' },
   successIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: '#F0F4FF', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
   successTitle: { fontSize: 24, fontWeight: '900', color: '#111', marginBottom: 10 },
   successMessage: { fontSize: 14, color: MUTED, textAlign: 'center', marginBottom: 25, lineHeight: 20 },
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
 });

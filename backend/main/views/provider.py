@@ -9,7 +9,8 @@ from main.serializers.catalog import (
     ServiceCreateUpdateSerializer,
     ServiceDetailSerializer,
 )
-from main.serializers.user import ProviderProfileDetailSerializer
+from main.serializers.user import ProviderProfileDetailSerializer, ProviderRegistrationSerializer
+from main.models.user import ProviderRegistration
 from main.services.catalog import CatalogService
 from main.services.provider import ProviderService
 
@@ -101,3 +102,13 @@ class MyServiceDetailView(APIView):
     def delete(self, request, pk):
         CatalogService.delete_service(request.user, pk)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class ProviderRegistrationCreateView(APIView):
+    """POST /api/providers/registration/"""
+    permission_classes = [IsAuthenticated, IsProvider]
+
+    def post(self, request):
+        serializer = ProviderRegistrationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)

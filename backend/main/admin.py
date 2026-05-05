@@ -10,6 +10,7 @@ from main.models import (
     Booking,
     HiringTransaction,
     Review,
+    ProviderRegistration,
 )
 
 
@@ -75,8 +76,15 @@ class HiringTransactionAdmin(admin.ModelAdmin):
     search_fields = ['client__email', 'provider__user__email']
 
 
+
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
     list_display = ['id', 'client', 'provider', 'rating', 'created_at']
     list_filter = ['rating']
     search_fields = ['client__email', 'provider__user__email', 'comment']
+
+@admin.register(ProviderRegistration)
+class ProviderRegistrationAdmin(admin.ModelAdmin):
+    list_display = ['user', 'category_name', 'provinsi_name', 'kota_name', 'created_at']
+    list_filter = ['category_name', 'provinsi_name', 'kota_name']
+    search_fields = ['user__email', 'category_name', 'alamat_lengkap']

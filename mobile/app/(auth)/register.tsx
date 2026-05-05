@@ -38,8 +38,11 @@ const allRegisterTouched: Partial<Record<RegisterFieldName, boolean>> = {
   lastName: true,
   password: true,
   passwordConfirm: true,
+<<<<<<< HEAD
   phone: true,
   bio: true,
+=======
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
 };
 
 export default function RegisterScreen() {
@@ -50,6 +53,7 @@ export default function RegisterScreen() {
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
 
+<<<<<<< HEAD
   const updateUsername = (firstName: string, lastName: string) => {
     const combined = `${firstName}_${lastName}`.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
     return combined.slice(0, 24);
@@ -71,6 +75,31 @@ export default function RegisterScreen() {
     const nextForm = { ...form, [field]: value } as RegisterFormValues;
     setForm(nextForm);
     if (submitError) setSubmitError('');
+=======
+  const fullName = [form.firstName, form.lastName].filter(Boolean).join(' ');
+
+  const buildNameState = (value: string) => {
+    const parts = value.trim().split(/\s+/).filter(Boolean);
+    const baseUsername = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 24);
+    return {
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ') || parts[0] || '',
+      username: baseUsername ? `${baseUsername}${baseUsername.length < 4 ? '_1234'.slice(0, 4 - baseUsername.length) : ''}` : '',
+    };
+  };
+
+  const handleNameChange = (value: string) => {
+    const nextForm = { ...form, ...buildNameState(value) };
+    setForm(nextForm);
+    if (submitError) setSubmitError('');
+    if (touched.firstName || touched.username) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
+  };
+
+  const handleChange = (field: RegisterFieldName, value: string) => {
+    const nextForm = { ...form, [field]: value } as RegisterFormValues;
+    setForm(nextForm);
+    if (submitError) setSubmitError('');
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
     if (touched[field]) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
   };
 
@@ -151,6 +180,7 @@ export default function RegisterScreen() {
               </Pressable>
             </View>
 
+<<<<<<< HEAD
             <View style={{ flexDirection: 'row', gap: 12 }}>
               <View style={{ flex: 1 }}>
                 <AuthField
@@ -207,6 +237,16 @@ export default function RegisterScreen() {
                 onBlur={() => handleBlurField('bio')}
               />
             )}
+=======
+            <AuthField
+              label="Nama"
+              placeholder="Masukkan Nama Lengkap"
+              value={fullName}
+              error={fieldErrors.firstName || fieldErrors.lastName || fieldErrors.username}
+              onChangeText={handleNameChange}
+              onBlur={() => handleBlurField('firstName')}
+            />
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
             <AuthField
               label="Email"
               placeholder="Masukkan Email"

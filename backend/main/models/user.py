@@ -53,6 +53,7 @@ class ClientProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='client_profile',
     )
+
     city = models.ForeignKey(
         'main.City',
         on_delete=models.SET_NULL,
@@ -148,3 +149,31 @@ class ProviderProfile(models.Model):
 
     def __str__(self):
         return f"ProviderProfile: {self.user.email}"
+
+class ProviderRegistration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='registrations')
+    category_id = models.CharField(max_length=50)
+    category_name = models.CharField(max_length=100)
+    foto_diri = models.TextField(null=True, blank=True)
+    
+    # Regional Data (External API IDs)
+    provinsi_id = models.CharField(max_length=20, null=True, blank=True)
+    provinsi_name = models.CharField(max_length=100, null=True, blank=True)
+    kota_id = models.CharField(max_length=20, null=True, blank=True)
+    kota_name = models.CharField(max_length=100, null=True, blank=True)
+    kecamatan_id = models.CharField(max_length=20, null=True, blank=True)
+    kecamatan_name = models.CharField(max_length=100, null=True, blank=True)
+    kelurahan_id = models.CharField(max_length=20, null=True, blank=True)
+    kelurahan_name = models.CharField(max_length=100, null=True, blank=True)
+    alamat_lengkap = models.TextField(null=True, blank=True)
+    
+    pengalaman = models.TextField(null=True, blank=True)
+    tahun_pengalaman = models.IntegerField(default=0)
+    gaji_diharapkan = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'providers_registration'
+        ordering = ['-created_at']

@@ -40,7 +40,12 @@
         }
       ],
       "expo-secure-store",
+<<<<<<< HEAD
       "expo-font"
+=======
+      "expo-font",
+      "expo-web-browser"
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
     ],
     "experiments": {
       "typedRoutes": true,

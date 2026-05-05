@@ -35,6 +35,7 @@ class AuthService:
         if role == 'client':
             UserRepository.create_client_profile(
                 user=user,
+
                 city_id=validated_data.get('city_id'),
             )
         elif role == 'provider':

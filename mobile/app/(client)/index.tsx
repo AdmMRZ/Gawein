@@ -19,7 +19,7 @@ const BORDER = '#D9D9D9';
 type HomeMode = 'home' | 'categories' | 'results' | 'filter';
 type SortFilter = 'price' | 'rating' | 'experience' | null;
 type ExperienceFilter = '<5' | '6-10' | '>10' | null;
-type LocationFilter = number | null;
+type LocationFilter = string | null;
 
 // Removed hardcoded categories and providers
 
@@ -44,7 +44,19 @@ export default function HomeScreen() {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    Promise.all([providerService.list(), categoryService.list(), api<any[]>('/cities/').catch(() => [])])
+    Promise.all([
+      providerService.list(), 
+      categoryService.list(), 
+      // Fetch major cities from regional API for initial filter options
+      // 3171: Jakarta Pusat, 3273: Bandung, 3578: Surabaya, 5171: Denpasar, 3374: Semarang
+      Promise.all([
+        fetch('https://api-regional-indonesia.vercel.app/api/city/3171').then(r => r.json()),
+        fetch('https://api-regional-indonesia.vercel.app/api/city/3273').then(r => r.json()),
+        fetch('https://api-regional-indonesia.vercel.app/api/city/3578').then(r => r.json()),
+        fetch('https://api-regional-indonesia.vercel.app/api/city/5171').then(r => r.json()),
+        fetch('https://api-regional-indonesia.vercel.app/api/city/3374').then(r => r.json()),
+      ]).then(results => results.map(r => r.data))
+    ])
       .then(([providerRes, categoryRes, citiesRes]) => {
         setProviders(providerRes);
         setCategories(categoryRes);
@@ -87,7 +99,7 @@ export default function HomeScreen() {
           : experience === '>10'
             ? provider.years_of_experience > 10
             : true;
-      const byLocation = location ? provider.city_id === location : true;
+      const byLocation = location ? (provider as any).kota_id === location : true;
       return byKeyword && byCategory && byPrice && byGender && byAge && byExperience && byLocation;
     });
 
@@ -177,9 +189,15 @@ export default function HomeScreen() {
 
         <Text style={styles.sectionLabel}>Usia</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+<<<<<<< HEAD
           <SmallInput placeholder="" value={minAge} onChangeText={setMinAge} keyboardType="number-pad" />
           <Text style={{ fontWeight: '800', color: TEXT }}>s.d.</Text>
           <SmallInput placeholder="" value={maxAge} onChangeText={setMaxAge} keyboardType="number-pad" />
+=======
+          <SmallInput placeholder="Masukkan Usia" value={minAge} onChangeText={setMinAge} keyboardType="number-pad" />
+          <Text style={{ fontWeight: '800', color: TEXT }}>s.d.</Text>
+          <SmallInput placeholder="Masukkan Usia" value={maxAge} onChangeText={setMaxAge} keyboardType="number-pad" />
+>>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
           <Text style={{ color: TEXT }}>tahun</Text>
         </View>
 
@@ -204,7 +222,7 @@ export default function HomeScreen() {
             {location ? (
               (() => {
                 const city = cities.find(c => c.id === location);
-                return city ? `${city.name}, ${city.province_name}` : 'Pilih Kota...';
+                return city ? `${city.name}` : 'Pilih Kota...';
               })()
             ) : 'Semua Kota'}
           </Text>

@@ -8,6 +8,7 @@ from main.views.provider import (
     ProviderDetailView,
     MyServiceListCreateView,
     MyServiceDetailView,
+    ProviderRegistrationCreateView,
 )
 from main.views.search import ProviderSearchView
 from main.views.scheduling import (
@@ -52,6 +53,7 @@ urlpatterns = [
     path('providers/<int:pk>/', ProviderDetailView.as_view(), name='provider-detail'),
     path('providers/services/', MyServiceListCreateView.as_view(), name='my-service-list-create'),
     path('providers/services/<int:pk>/', MyServiceDetailView.as_view(), name='my-service-detail'),
+    path('providers/registration/', ProviderRegistrationCreateView.as_view(), name='provider-registration'),
 
     # ── Search & Filter ─────────────────────────────────────
     path('search/providers/', ProviderSearchView.as_view(), name='provider-search'),
