@@ -353,7 +353,7 @@ export default function ProviderFormScreen() {
               keyboardType="numeric"
             />
             <Input
-              label="Gaji/Harga yang diinginkan (Rp)"
+              label="Gaji yang diharapkan per hari (Rp)"
               value={form.price}
               onChangeText={(text) => setForm({ ...form, price: text })}
               placeholder="Contoh: 150000"

@@ -26,10 +26,42 @@ const TEXT = '#111111';
 const MUTED = '#6E7480';
 
 // ── Format Rupiah ──────────────────────────────────────────
+const parseMoney = (value: string | number | undefined) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const raw = String(value ?? '').trim();
+  if (!raw) return 0;
+  const numeric = raw.replace(/[^\d.,-]/g, '');
+  const lastDot = numeric.lastIndexOf('.');
+  const lastComma = numeric.lastIndexOf(',');
+  const decimalIndex = Math.max(lastDot, lastComma);
+
+  if (decimalIndex >= 0 && numeric.length - decimalIndex - 1 <= 2) {
+    const whole = numeric.slice(0, decimalIndex).replace(/\D/g, '');
+    const decimal = numeric.slice(decimalIndex + 1).replace(/\D/g, '');
+    return Math.round(Number.parseFloat(`${whole}.${decimal}`));
+  }
+
+  return Number.parseInt(numeric.replace(/\D/g, ''), 10) || 0;
+};
+
+const parseLocalDate = (value: string | undefined) => {
+  const [year, month, day] = String(value ?? '').split('-').map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
 const formatRupiah = (value: string | number) => {
-  const num = typeof value === 'number' ? value : parseInt(String(value).replace(/\D/g, ''), 10);
+  const num = parseMoney(value);
   if (isNaN(num)) return 'Rp 0';
   return `Rp ${num.toLocaleString('id-ID')}`;
+};
+
+const daysBetweenInclusive = (start: string, end: string) => {
+  const startDate = parseLocalDate(start);
+  const endDate = parseLocalDate(end);
+  if (!startDate || !endDate || isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 1;
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.max(1, Math.floor((endDate.getTime() - startDate.getTime()) / dayMs) + 1);
 };
 
 // ── Payment Method Item ────────────────────────────────────
@@ -123,8 +155,11 @@ export default function PaymentScreen() {
     providerName: string;
     categoryName: string;
     price: string;
+    mode?: string;
     workDate: string;
+    endDate?: string;
     startTime: string;
+    endTime?: string;
     location: string;
   }>();
   const router = useRouter();
@@ -134,7 +169,10 @@ export default function PaymentScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const servicePrice = parseInt(String(params.price ?? '0').replace(/\D/g, ''), 10) || 0;
+  const basePricePerDay = parseMoney(params.price);
+  const isRentang = params.mode === 'rentang' && Boolean(params.endDate);
+  const numDays = isRentang ? daysBetweenInclusive(params.workDate ?? '', params.endDate ?? '') : 1;
+  const servicePrice = basePricePerDay * numDays;
   const total = servicePrice + TRANSPORT_FEE + PLATFORM_FEE;
 
   const handleSubmit = async () => {
@@ -159,7 +197,7 @@ export default function PaymentScreen() {
           agreed_price: servicePrice,
           work_date: params.workDate,
           location: params.location ?? '',
-          notes: `Waktu: ${params.startTime ?? ''}`,
+          notes: `Mode: ${params.mode ?? 'harian'} | Waktu: ${params.startTime ?? ''}${isRentang && params.endTime ? ` - ${params.endTime}` : ''}`,
         },
         { idempotencyKey: `hi-${sessionKey}` }
       );
@@ -180,10 +218,18 @@ export default function PaymentScreen() {
 
   const formatDate = (dateStr: string) => {
     if (!dateStr) return '-';
-    const d = new Date(dateStr);
+    const d = parseLocalDate(dateStr);
+    if (!d) return dateStr;
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
   };
+
+  const dateDisplay = isRentang
+    ? `${formatDate(params.workDate ?? '')} - ${formatDate(params.endDate ?? '')}`
+    : formatDate(params.workDate ?? '');
+  const timeDisplay = isRentang && params.endTime
+    ? `${params.startTime ?? '-'} - ${params.endTime}`
+    : params.startTime ?? '-';
 
   return (
     <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
@@ -222,7 +268,10 @@ export default function PaymentScreen() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: FontSize.xs, color: MUTED, fontWeight: FontWeight.semibold }}>{params.categoryName}</Text>
               <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: TEXT }} numberOfLines={1}>{params.providerName}</Text>
-              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: BLUE }}>{formatRupiah(servicePrice)}</Text>
+              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: BLUE }}>{formatRupiah(basePricePerDay)}</Text>
+              {isRentang && numDays > 1 ? (
+                <Text style={{ fontSize: FontSize.xs, color: MUTED, marginTop: 2 }}>per hari</Text>
+              ) : null}
             </View>
           </View>
 
@@ -230,8 +279,8 @@ export default function PaymentScreen() {
 
           {/* Date, Time, Location rows */}
           {[
-            { icon: 'calendar-outline', label: 'Tanggal', value: formatDate(params.workDate ?? '') },
-            { icon: 'time-outline', label: 'Waktu', value: params.startTime ?? '-' },
+            { icon: 'calendar-outline', label: isRentang ? 'Rentang' : 'Tanggal', value: dateDisplay },
+            { icon: 'time-outline', label: 'Waktu', value: timeDisplay },
             { icon: 'location-outline', label: 'Lokasi', value: params.location ?? '-' },
           ].map(({ icon, label, value }) => (
             <View key={label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -306,7 +355,10 @@ export default function PaymentScreen() {
             Detail Transaksi
           </Text>
 
-          <TransactionRow label="Biaya Jasa" amount={servicePrice} />
+          <TransactionRow
+            label={isRentang && numDays > 1 ? `Biaya Jasa (${formatRupiah(basePricePerDay)} x ${numDays} hari)` : 'Biaya Jasa'}
+            amount={servicePrice}
+          />
           <TransactionRow label="Biaya Transportasi" amount={TRANSPORT_FEE} />
           <TransactionRow label="Biaya Platform" amount={PLATFORM_FEE} />
 

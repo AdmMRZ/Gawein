@@ -91,7 +91,7 @@ export default function HiringDetailScreen() {
             <DetailRow icon="person" label={isClient ? 'Penyedia Jasa' : 'Pemesan'} value={isClient ? hiring.provider_name : hiring.client_name} />
             <DetailRow icon="wallet" label="Harga Kesepakatan" value={`Rp ${parseInt(hiring.agreed_price).toLocaleString('id-ID')}`} />
             <DetailRow icon="calendar-outline" label="Tanggal Kerja" value={hiring.work_date} />
-            <DetailRow icon="location" label="Lokasi" value={hiring.location || '-'} />
+            <DetailRow icon="location" label="Lokasi" value={hiring.city || '-'} />
             {hiring.notes ? <DetailRow icon="document-text" label="Catatan" value={hiring.notes} /> : null}
           </View>
         </View>

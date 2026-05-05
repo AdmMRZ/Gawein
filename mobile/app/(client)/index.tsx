@@ -76,7 +76,7 @@ export default function HomeScreen() {
   const filteredProviders = useMemo(() => {
     const keyword = normalize(query);
     const list = providerSource.filter((provider) => {
-      const firstReg = provider.registrations?.[0];
+      const matchedRegistrations = getRelevantRegistrations(provider, selectedCategory);
       const searchable = [
         provider.user.first_name,
         provider.user.last_name,
@@ -84,15 +84,17 @@ export default function HomeScreen() {
         provider.user?.gender,
         provider.kota_name,
         provider.provinsi_name,
-        firstReg?.category_name,
+        ...(provider.registrations ?? []).flatMap((reg) => [
+          reg.category_name,
+          reg.kota_name,
+          reg.provinsi_name,
+          reg.pengalaman,
+        ]),
       ].filter(Boolean).join(' ').toLowerCase();
       const byKeyword = keyword ? normalize(searchable).includes(keyword) : true;
-      const selectedName = selectedCategory?.name;
-      const byCategory = selectedName
-        ? provider.registrations?.some((reg) => normalize(reg.category_name || '').includes(normalize(selectedName)))
-        : true;
-      const price = Number.parseFloat(firstReg?.gaji_diharapkan || '0');
-      const byPrice = price >= priceRange[0] && price <= priceRange[1];
+      const byCategory = selectedCategory ? matchedRegistrations.length > 0 : true;
+      const price = getLowestDailyPrice(matchedRegistrations);
+      const byPrice = price > 0 && price >= priceRange[0] && price <= priceRange[1];
       const byGender = gender ? genderMatches(provider.user?.gender || '', gender) : true;
       const byAge = (!minAge || (provider.age || 0) >= Number(minAge)) && (!maxAge || (provider.age || 0) <= Number(maxAge));
       const byExperience = experience === '<5'
@@ -102,7 +104,9 @@ export default function HomeScreen() {
           : experience === '>10'
             ? provider.years_of_experience > 10
             : true;
-      const byLocation = location ? provider.kota_id === location : true;
+      const byLocation = location
+        ? provider.kota_id === location || matchedRegistrations.some((reg) => reg.kota_id === location)
+        : true;
       return byKeyword && byCategory && byPrice && byGender && byAge && byExperience && byLocation;
     });
 
@@ -167,7 +171,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Rentang Harga</Text>
+        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Rentang Gaji per Hari</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
           <Text style={{ fontSize: 12, color: BLUE, fontWeight: '700' }}>{formatPrice(priceRange[0].toString())}</Text>
           <Text style={{ fontSize: 12, color: BLUE, fontWeight: '700' }}>{formatPrice(priceRange[1].toString())}</Text>
@@ -482,7 +486,7 @@ function ProviderRow({ provider, index }: { provider: ProviderProfile; index: nu
           <Text style={{ color: BLUE, fontSize: 17, fontWeight: '900' }} numberOfLines={1}>{fullName}</Text>
           <Text style={{ color: MUTED, fontSize: 10 }}>{provider.years_of_experience || 1} tahun pengalaman • {provider.kota_name || 'Lokasi tidak ada'}</Text>
           <View style={{ backgroundColor: YELLOW, borderRadius: 5, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', marginTop: 8 }}>
-            <Text style={{ color: TEXT, fontWeight: '900', fontSize: 12 }}>{formatPrice(reg?.gaji_diharapkan)}</Text>
+            <Text style={{ color: TEXT, fontWeight: '900', fontSize: 12 }}>{formatDailyPrice(reg?.gaji_diharapkan)}</Text>
           </View>
         </View>
       </Pressable>
@@ -508,7 +512,7 @@ function RecommendationCard({ provider, index }: { provider: ProviderProfile; in
         </View>
         <Text style={{ color: MUTED, fontSize: 10 }}>{provider.years_of_experience || 1} thn • {provider.kota_name || 'N/A'}</Text>
         <View style={{ backgroundColor: YELLOW, borderRadius: 5, paddingHorizontal: 9, paddingVertical: 5, alignSelf: 'flex-start', marginTop: 6 }}>
-          <Text style={{ color: TEXT, fontWeight: '900', fontSize: 11 }}>{formatPrice(reg?.gaji_diharapkan)}</Text>
+          <Text style={{ color: TEXT, fontWeight: '900', fontSize: 11 }}>{formatDailyPrice(reg?.gaji_diharapkan)}</Text>
         </View>
       </Pressable>
     </Link>
@@ -570,7 +574,7 @@ const styles = {
 };
 
 function sortValue(provider: ProviderProfile, sortBy: Exclude<SortFilter, null>) {
-  if (sortBy === 'price') return Number.parseFloat(provider.registrations?.[0]?.gaji_diharapkan || '0');
+  if (sortBy === 'price') return getLowestDailyPrice(provider.registrations ?? []);
   if (sortBy === 'rating') return Number.parseFloat(provider.rating_average || '0');
   return provider.years_of_experience || 0;
 }
@@ -579,6 +583,24 @@ function formatPrice(value?: string) {
   const price = Number.parseInt(value || '3500000', 10);
   if (price >= 1000000) return `Rp${(price / 1000000).toLocaleString('id-ID', { maximumFractionDigits: 1 })}juta`;
   return `Rp${price.toLocaleString('id-ID')}`;
+}
+
+function formatDailyPrice(value?: string) {
+  return `${formatPrice(value)}/hari`;
+}
+
+function getRelevantRegistrations(provider: ProviderProfile, selectedCategory: Category | null) {
+  const registrations = provider.registrations ?? [];
+  if (!selectedCategory) return registrations;
+  const selectedName = normalize(selectedCategory.name || '');
+  return registrations.filter((reg) => normalize(reg.category_name || '').includes(selectedName));
+}
+
+function getLowestDailyPrice(registrations: ProviderProfile['registrations']) {
+  const prices = registrations
+    .map((reg) => Number.parseFloat(reg.gaji_diharapkan || '0'))
+    .filter((price) => Number.isFinite(price) && price > 0);
+  return prices.length ? Math.min(...prices) : 0;
 }
 
 function normalize(value: string) {

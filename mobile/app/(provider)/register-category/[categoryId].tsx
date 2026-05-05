@@ -215,8 +215,8 @@ export default function RegisterCategoryScreen() {
         <Field label="Pengalaman (dalam tahun)">
           <TextInput style={styles.input} value={tahunPengalaman} onChangeText={setTahunPengalaman} keyboardType="number-pad" placeholder="Misal: 3" />
         </Field>
-        <Field label="Gaji yang diinginkan (Rp)">
-          <TextInput style={styles.input} value={gaji} onChangeText={setGaji} keyboardType="number-pad" placeholder="Misal: 3000000" />
+        <Field label="Gaji yang diinginkan per hari (Rp)">
+          <TextInput style={styles.input} value={gaji} onChangeText={setGaji} keyboardType="number-pad" placeholder="Misal: 250000" />
         </Field>
 
         <Pressable onPress={() => setShowConfirmModal(true)} style={styles.mainBtn}>

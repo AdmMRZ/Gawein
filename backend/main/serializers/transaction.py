@@ -32,8 +32,8 @@ class HiringCreateSerializer(serializers.Serializer):
     booking_id = serializers.IntegerField()
     agreed_price = serializers.DecimalField(max_digits=12, decimal_places=2)
     work_date = serializers.DateField()
-    location = serializers.CharField(max_length=255, required=False, default='')
-    notes = serializers.CharField(required=False, default='')
+    location = serializers.CharField(max_length=255, required=False, default='', allow_blank=True)
+    notes = serializers.CharField(required=False, default='', allow_blank=True)
 
     def validate_agreed_price(self, value):
         if value <= 0:

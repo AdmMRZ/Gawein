@@ -53,6 +53,24 @@ function pad(n: number) {
   return String(n).padStart(2, '0');
 }
 
+function parseMoney(value: string | number | undefined) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  const raw = String(value ?? '').trim();
+  if (!raw) return 0;
+  const numeric = raw.replace(/[^\d.,-]/g, '');
+  const lastDot = numeric.lastIndexOf('.');
+  const lastComma = numeric.lastIndexOf(',');
+  const decimalIndex = Math.max(lastDot, lastComma);
+
+  if (decimalIndex >= 0 && numeric.length - decimalIndex - 1 <= 2) {
+    const whole = numeric.slice(0, decimalIndex).replace(/\D/g, '');
+    const decimal = numeric.slice(decimalIndex + 1).replace(/\D/g, '');
+    return Math.round(Number.parseFloat(`${whole}.${decimal}`));
+  }
+
+  return Number.parseInt(numeric.replace(/\D/g, ''), 10) || 0;
+}
+
 // ── Time Picker Spinner Modal ───────────────────────────────
 function TimePickerModal({
   visible,
@@ -403,6 +421,10 @@ export default function BookingScheduleScreen() {
 
   const handleConfirmed = () => {
     setShowConfirm(false);
+    const startDateStr = `${calYear}-${pad(calMonth + 1)}-${pad(selectedStart!)}`;
+    const endDateStr = mode === 'rentang' && selectedEnd
+      ? `${calYear}-${pad(calMonth + 1)}-${pad(selectedEnd)}`
+      : '';
     router.push({
       pathname: '/booking/payment',
       params: {
@@ -410,9 +432,12 @@ export default function BookingScheduleScreen() {
         providerId: String(provider?.id ?? ''),
         providerName,
         categoryName: roleName,
-        price: registration?.gaji_diharapkan ?? '0',
-        workDate: `${calYear}-${pad(calMonth + 1)}-${pad(selectedStart!)}`,
-        startTime: `${pad(startTime.hour)}:${pad(startTime.minute)}`,
+        price: String(parseMoney(registration?.gaji_diharapkan)),
+        mode,
+        workDate: startDateStr,
+        endDate: endDateStr,
+        startTime: `${pad(startTime.hour)}:${pad(startTime.minute)} ${startTime.ampm}`,
+        endTime: endDateStr ? `${pad(endTime.hour)}:${pad(endTime.minute)} ${endTime.ampm}` : '',
         location: location.trim(),
       },
     });
@@ -469,7 +494,7 @@ export default function BookingScheduleScreen() {
             <Text style={{ fontSize: 18, fontWeight: FontWeight.bold, color: TEXT }} numberOfLines={1}>{providerName}</Text>
             <Text style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>{roleName}</Text>
             <Text style={{ fontSize: 14, color: BLUE, fontWeight: FontWeight.bold, marginTop: 5 }}>
-              Rp {parseInt(registration?.gaji_diharapkan || '0', 10).toLocaleString('id-ID')}
+              Rp {parseMoney(registration?.gaji_diharapkan).toLocaleString('id-ID')}/hari
             </Text>
           </View>
         </View>

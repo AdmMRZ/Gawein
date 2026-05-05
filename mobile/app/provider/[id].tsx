@@ -155,7 +155,7 @@ function DetailPanel({ category, location, years, price }: { category: string; l
         <View style={styles.detailGrid}>
           <DetailRow icon="location-outline" label="Lokasi" value={location} />
           <DetailRow icon="briefcase-outline" label="Pengalaman" value={years} />
-          <DetailRow icon="cash-outline" label="Gaji diharapkan" value={price} emphasis />
+          <DetailRow icon="cash-outline" label="Gaji per hari" value={price} emphasis />
         </View>
       </View>
     </View>
@@ -346,7 +346,7 @@ function lines(value: string | undefined, fallback: string[]) {
 function formatPrice(value?: string) {
   const price = Number.parseInt(value || '0', 10);
   if (!price) return 'Belum ditentukan';
-  return `Rp${price.toLocaleString('id-ID')}`;
+  return `Rp${price.toLocaleString('id-ID')}/hari`;
 }
 
 
