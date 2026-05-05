@@ -15,6 +15,7 @@ def _get_env_list(key: str, default: str = "") -> list[str]:
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
 ALLOWED_HOSTS = _get_env_list("DJANGO_ALLOWED_HOSTS")
+CSRF_TRUSTED_ORIGINS = _get_env_list("CSRF_TRUSTED_ORIGINS")
 
 
 # Application definition
