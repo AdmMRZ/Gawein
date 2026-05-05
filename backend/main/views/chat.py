@@ -11,9 +11,12 @@ class ChatRoomViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        return ChatRoom.objects.filter(
+        qs = ChatRoom.objects.filter(
             Q(client=user) | Q(provider=user)
-        ).filter(messages__isnull=False).distinct().order_by('-updated_at')
+        ).distinct().order_by('-updated_at')
+        if self.action == 'list':
+            return qs.filter(messages__isnull=False)
+        return qs
 
     @action(detail=False, methods=['post'])
     def get_or_create(self, request):
