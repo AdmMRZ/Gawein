@@ -92,11 +92,15 @@ export function validateRegisterForm(values: RegisterFormValues): RegisterErrors
     errors.username = 'Gunakan 4-30 karakter: huruf, angka, titik, atau underscore.';
   }
 
-  if (firstName && firstName.length < 2) {
+  if (!firstName) {
+    errors.firstName = 'Nama depan wajib diisi.';
+  } else if (firstName.length < 2) {
     errors.firstName = 'Nama depan minimal 2 karakter.';
   }
 
-  if (lastName && lastName.length < 2) {
+  if (!lastName) {
+    errors.lastName = 'Nama belakang wajib diisi.';
+  } else if (lastName.length < 2) {
     errors.lastName = 'Nama belakang minimal 2 karakter.';
   }
 
@@ -228,7 +232,7 @@ export function mapRegisterApiErrors(
 }
 
 export function buildRegisterPayload(values: RegisterFormValues): RegisterData {
-  return {
+  const payload: RegisterData = {
     email: values.email.trim().toLowerCase(),
     username: values.username.trim(),
     password: values.password,
@@ -236,8 +240,18 @@ export function buildRegisterPayload(values: RegisterFormValues): RegisterData {
     first_name: values.firstName.trim(),
     last_name: values.lastName.trim(),
     role: values.role,
-    phone: normalizePhoneNumber(values.phone),
-    location: values.location.trim(),
-    ...(values.role === 'provider' ? { bio: values.bio.trim() } : {}),
   };
+
+  const phone = normalizePhoneNumber(values.phone);
+  if (phone) payload.phone = phone;
+
+  const location = values.location.trim();
+  if (location) payload.location = location;
+
+  if (values.role === 'provider') {
+    const bio = values.bio.trim();
+    if (bio) payload.bio = bio;
+  }
+
+  return payload;
 }

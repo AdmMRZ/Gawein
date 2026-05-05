@@ -15,16 +15,16 @@ from main.models import (
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['email', 'username', 'role', 'is_active', 'is_verified', 'created_at']
+    list_display = ['email', 'username', 'role', 'phone', 'is_active', 'is_verified', 'created_at']
     list_filter = ['role', 'is_active', 'is_verified']
-    search_fields = ['email', 'username', 'first_name', 'last_name']
+    search_fields = ['email', 'username', 'first_name', 'last_name', 'phone']
     ordering = ['-created_at']
 
 
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'phone', 'city']
-    search_fields = ['user__email', 'phone', 'city__name']
+    list_display = ['user', 'city']
+    search_fields = ['user__email', 'city__name']
 
 
 @admin.register(ProviderProfile)

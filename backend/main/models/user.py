@@ -11,6 +11,7 @@ class User(AbstractUser):
         PROVIDER = 'provider', 'Provider'
 
     email = models.EmailField(unique=True)
+    phone = models.CharField(max_length=20, blank=True, default='')
     gender = models.CharField(max_length=20, blank=True, default='')
     role = models.CharField(
         max_length=20,
@@ -52,7 +53,6 @@ class ClientProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='client_profile',
     )
-    phone = models.CharField(max_length=20, blank=True, default='')
     city = models.ForeignKey(
         'main.City',
         on_delete=models.SET_NULL,

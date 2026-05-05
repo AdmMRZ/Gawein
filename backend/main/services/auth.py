@@ -28,13 +28,13 @@ class AuthService:
             first_name=validated_data.get('first_name', ''),
             last_name=validated_data.get('last_name', ''),
             gender=validated_data.get('gender', ''),
+            phone=validated_data.get('phone', ''),
         )
 
         # Create role-specific profile
         if role == 'client':
             UserRepository.create_client_profile(
                 user=user,
-                phone=validated_data.get('phone', ''),
                 city_id=validated_data.get('city_id'),
             )
         elif role == 'provider':

@@ -177,9 +177,9 @@ export default function HomeScreen() {
 
         <Text style={styles.sectionLabel}>Usia</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <SmallInput placeholder="Masukkan Usia" value={minAge} onChangeText={setMinAge} keyboardType="number-pad" />
+          <SmallInput placeholder="" value={minAge} onChangeText={setMinAge} keyboardType="number-pad" />
           <Text style={{ fontWeight: '800', color: TEXT }}>s.d.</Text>
-          <SmallInput placeholder="Masukkan Usia" value={maxAge} onChangeText={setMaxAge} keyboardType="number-pad" />
+          <SmallInput placeholder="" value={maxAge} onChangeText={setMaxAge} keyboardType="number-pad" />
           <Text style={{ color: TEXT }}>tahun</Text>
         </View>
 

@@ -38,6 +38,8 @@ const allRegisterTouched: Partial<Record<RegisterFieldName, boolean>> = {
   lastName: true,
   password: true,
   passwordConfirm: true,
+  phone: true,
+  bio: true,
 };
 
 export default function RegisterScreen() {
@@ -48,23 +50,21 @@ export default function RegisterScreen() {
   const [submitError, setSubmitError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fullName = [form.firstName, form.lastName].filter(Boolean).join(' ');
-
-  const buildNameState = (value: string) => {
-    const parts = value.trim().split(/\s+/).filter(Boolean);
-    const baseUsername = value.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 24);
-    return {
-      firstName: parts[0] || '',
-      lastName: parts.slice(1).join(' ') || parts[0] || '',
-      username: baseUsername ? `${baseUsername}${baseUsername.length < 4 ? '_1234'.slice(0, 4 - baseUsername.length) : ''}` : '',
-    };
+  const updateUsername = (firstName: string, lastName: string) => {
+    const combined = `${firstName}_${lastName}`.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    return combined.slice(0, 24);
   };
 
-  const handleNameChange = (value: string) => {
-    const nextForm = { ...form, ...buildNameState(value) };
+  const handleNamePartChange = (field: 'firstName' | 'lastName', value: string) => {
+    const nextFirstName = field === 'firstName' ? value : form.firstName;
+    const nextLastName = field === 'lastName' ? value : form.lastName;
+    const nextUsername = updateUsername(nextFirstName, nextLastName);
+    
+    const nextForm = { ...form, [field]: value, username: nextUsername };
     setForm(nextForm);
+    
     if (submitError) setSubmitError('');
-    if (touched.firstName || touched.username) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
+    if (touched[field]) setFieldErrors(getTouchedFieldErrors(validateRegisterForm(nextForm), touched));
   };
 
   const handleChange = (field: RegisterFieldName, value: string) => {
@@ -151,14 +151,62 @@ export default function RegisterScreen() {
               </Pressable>
             </View>
 
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <AuthField
+                  label="Nama Depan"
+                  placeholder="Nama depan"
+                  value={form.firstName}
+                  error={fieldErrors.firstName}
+                  onChangeText={(v) => handleNamePartChange('firstName', v)}
+                  onBlur={() => handleBlurField('firstName')}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <AuthField
+                  label="Nama Belakang"
+                  placeholder="Nama belakang"
+                  value={form.lastName}
+                  error={fieldErrors.lastName}
+                  onChangeText={(v) => handleNamePartChange('lastName', v)}
+                  onBlur={() => handleBlurField('lastName')}
+                />
+              </View>
+            </View>
+
             <AuthField
-              label="Nama"
-              placeholder="Masukkan Nama Lengkap"
-              value={fullName}
-              error={fieldErrors.firstName || fieldErrors.lastName || fieldErrors.username}
-              onChangeText={handleNameChange}
-              onBlur={() => handleBlurField('firstName')}
+              label="Username"
+              placeholder="username_anda"
+              value={form.username}
+              error={fieldErrors.username}
+              autoCapitalize="none"
+              onChangeText={(v) => handleChange('username', v)}
+              onBlur={() => handleBlurField('username')}
             />
+
+            <AuthField
+              label="Nomor HP"
+              placeholder="0812xxxx"
+              value={form.phone}
+              error={fieldErrors.phone}
+              keyboardType="phone-pad"
+              onChangeText={(v) => handleChange('phone', v)}
+              onBlur={() => handleBlurField('phone')}
+            />
+
+            {form.role === 'provider' && (
+              <AuthField
+                label="Bio"
+                placeholder="Ceritakan pengalaman dan keahlian Anda (min. 20 karakter)"
+                value={form.bio}
+                error={fieldErrors.bio}
+                multiline
+                numberOfLines={3}
+                style={{ height: 100, textAlignVertical: 'top', paddingTop: 12 }}
+                onChangeText={(v) => handleChange('bio', v)}
+                onBlur={() => handleBlurField('bio')}
+              />
+            )}
             <AuthField
               label="Email"
               placeholder="Masukkan Email"

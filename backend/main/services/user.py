@@ -16,7 +16,6 @@ class UserService:
             if profile:
                 profile_data = {
                     'id': profile.id,
-                    'phone': profile.phone,
                     'city': profile.city.name if profile.city else '', 'city_id': profile.city_id,
                 }
         elif user.role == 'provider':
@@ -43,6 +42,7 @@ class UserService:
                 'first_name': user.first_name,
                 'last_name': user.last_name,
                 'gender': user.gender,
+                'phone': getattr(user, 'phone', ''),
                 'role': user.role,
                 'is_active': user.is_active,
                 'is_verified': user.is_verified,
@@ -56,7 +56,7 @@ class UserService:
     def update_profile(user, data: dict) -> dict:
         """Update user info and role-specific profile."""
         # Update user fields
-        user_fields = ['first_name', 'last_name', 'username', 'gender']
+        user_fields = ['first_name', 'last_name', 'username', 'gender', 'phone']
         user_updated = False
         for field in user_fields:
             if field in data:
@@ -69,7 +69,7 @@ class UserService:
         if user.role == 'client':
             profile = UserRepository.get_client_profile(user)
             if profile:
-                profile_fields = {k: v for k, v in data.items() if k in ['phone', 'city_id']}
+                profile_fields = {k: v for k, v in data.items() if k in ['city_id']}
                 if profile_fields:
                     UserRepository.update_client_profile(profile, **profile_fields)
         elif user.role == 'provider':
