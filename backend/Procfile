@@ -1,1 +1,1 @@
-web: daphne -b 0.0.0.0 -p $PORT gawein.asgi:application
+web: env DJANGO_SETTINGS_MODULE=gawein.settings daphne -b 0.0.0.0 -p $PORT gawein.asgi:application
