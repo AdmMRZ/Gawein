@@ -35,16 +35,12 @@ class AuthService:
         if role == 'client':
             UserRepository.create_client_profile(
                 user=user,
-
-                city_id=validated_data.get('city_id'),
             )
         elif role == 'provider':
             UserRepository.create_provider_profile(
                 user=user,
                 bio=validated_data.get('bio', ''),
-                gender=validated_data.get('gender', ''),
                 age=validated_data.get('age'),
-                city_id=validated_data.get('city_id'),
                 years_of_experience=validated_data.get('years_of_experience', 0),
             )
 

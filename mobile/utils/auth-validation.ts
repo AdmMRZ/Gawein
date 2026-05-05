@@ -17,7 +17,6 @@ export interface RegisterFormValues {
   password: string;
   passwordConfirm: string;
   phone: string;
-  location: string;
   bio: string;
 }
 
@@ -77,7 +76,6 @@ export function validateRegisterForm(values: RegisterFormValues): RegisterErrors
   const firstName = values.firstName.trim();
   const lastName = values.lastName.trim();
   const phone = values.phone.trim();
-  const location = values.location.trim();
   const bio = values.bio.trim();
 
   if (!email) {
@@ -120,10 +118,6 @@ export function validateRegisterForm(values: RegisterFormValues): RegisterErrors
 
   if (phone && !isPhoneLengthValid(phone)) {
     errors.phone = 'Nomor telepon harus 9-15 digit.';
-  }
-
-  if (location && location.length < 3) {
-    errors.location = 'Lokasi minimal 3 karakter.';
   }
 
   if (values.role === 'provider') {
@@ -226,7 +220,6 @@ export function mapRegisterApiErrors(
     password: firstErrorMessage(data.password),
     passwordConfirm: firstErrorMessage(data.password_confirm),
     phone: firstErrorMessage(data.phone),
-    location: firstErrorMessage(data.location),
     bio: firstErrorMessage(data.bio),
   };
 }
@@ -244,9 +237,6 @@ export function buildRegisterPayload(values: RegisterFormValues): RegisterData {
 
   const phone = normalizePhoneNumber(values.phone);
   if (phone) payload.phone = phone;
-
-  const location = values.location.trim();
-  if (location) payload.location = location;
 
   if (values.role === 'provider') {
     const bio = values.bio.trim();

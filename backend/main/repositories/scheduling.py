@@ -61,7 +61,7 @@ class SchedulingRepository:
     def list_bookings_by_client(client: User) -> QuerySet:
         return (
             Booking.objects
-            .select_related('provider__user', 'service', 'availability')
+            .select_related('provider__user', 'registration__category', 'availability')
             .filter(client=client)
         )
 
@@ -69,7 +69,7 @@ class SchedulingRepository:
     def list_bookings_by_provider(provider: ProviderProfile) -> QuerySet:
         return (
             Booking.objects
-            .select_related('client', 'service', 'availability')
+            .select_related('client', 'registration__category', 'availability')
             .filter(provider=provider)
         )
 
@@ -77,7 +77,7 @@ class SchedulingRepository:
     def get_booking_by_id(booking_id: int) -> Booking | None:
         return (
             Booking.objects
-            .select_related('client', 'provider__user', 'service', 'availability')
+            .select_related('client', 'provider__user', 'registration__category', 'availability')
             .filter(pk=booking_id)
             .first()
         )

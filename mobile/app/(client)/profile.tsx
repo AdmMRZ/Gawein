@@ -45,21 +45,11 @@ export default function ProfileScreen() {
   const [saving, setSaving] = useState(false);
 
   const [fullName, setFullName] = useState('');
-<<<<<<< HEAD
   const [phone, setPhone] = useState('');
-=======
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
   const [gender, setGender] = useState<GenderValue>('Perempuan');
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-<<<<<<< HEAD
-  const [cityId, setCityId] = useState<number | null>(null);
-  const [cityName, setCityName] = useState('');
-  const [cities, setCities] = useState<any[]>([]);
-  const [cityModalVisible, setCityModalVisible] = useState(false);
-=======
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
   const [cardForm, setCardForm] = useState<PaymentCardInput>(initialCardForm);
 
   const displayName = useMemo(() => {
@@ -73,12 +63,8 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     setGender(normalizeGender(user?.gender));
-<<<<<<< HEAD
     setPhone(user?.phone || '');
   }, [user?.gender, user?.phone]);
-=======
-  }, [user?.gender]);
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
 
   useEffect(() => {
     loadCards();
@@ -88,18 +74,7 @@ export default function ProfileScreen() {
     try {
       const result = await userService.getPaymentCards();
       setCards(result);
-<<<<<<< HEAD
       
-      const res = await userService.getProfile();
-      if (res.profile) {
-        setCityId(res.profile.city_id || null);
-        setCityName(res.profile.city || '');
-      }
-
-      const cRes = await api<any[]>('/cities/');
-      setCities(cRes);
-=======
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
     } catch {
       setCards([]);
     } finally {
@@ -143,11 +118,7 @@ export default function ProfileScreen() {
         first_name: firstName,
         last_name: lastNameParts.join(' '),
         gender,
-<<<<<<< HEAD
         phone,
-        city_id: cityId,
-=======
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
       });
 
       if (newPassword) {
@@ -231,15 +202,11 @@ export default function ProfileScreen() {
           saving={saving}
           onBack={goProfile}
           onName={setFullName}
-<<<<<<< HEAD
           phone={phone}
           onPhone={setPhone}
           onGender={setGender}
-          cityName={cityName}
-          setCityModal={setCityModalVisible}
-=======
-          onGender={setGender}
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
+
+
           onOldPassword={setOldPassword}
           onNewPassword={setNewPassword}
           onConfirmPassword={setConfirmPassword}
@@ -268,35 +235,8 @@ export default function ProfileScreen() {
 
       <SuccessModal message={successMessage} onClose={() => setSuccessMessage('')} />
       <DeleteModal card={deleteTarget} onCancel={() => setDeleteTarget(null)} onContinue={confirmDeleteCard} />
-<<<<<<< HEAD
 
-      {/* Modal Kota */}
-      <Modal visible={cityModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.cityBox}>
-            <Text style={styles.modalTitle}>Pilih Kota</Text>
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {cities.map(c => (
-                <Pressable key={c.id} style={styles.cityItem}
-                  onPress={() => {
-                    setCityId(c.id);
-                    setCityName(c.name);
-                    setCityModalVisible(false);
-                  }}>
-                  <View>
-                    <Text style={[styles.cityText, cityId === c.id && { color: BLUE, fontWeight: '900' }]}>{c.name}</Text>
-                    <Text style={styles.provinceText}>{c.province_name}</Text>
-                  </View>
-                  {cityId === c.id && <Ionicons name="checkmark-circle" size={20} color={BLUE} />}
-                </Pressable>
-              ))}
-            </ScrollView>
-            <PrimaryButton title="Tutup" color={YELLOW} textColor="#111111" onPress={() => setCityModalVisible(false)} />
-          </View>
-        </View>
-      </Modal>
-=======
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
+
     </View>
   );
 }
@@ -367,15 +307,11 @@ function EditProfile(props: {
   saving: boolean;
   onBack: () => void;
   onName: (value: string) => void;
-<<<<<<< HEAD
   phone: string;
   onPhone: (value: string) => void;
   onGender: (value: GenderValue) => void;
-  cityName: string;
-  setCityModal: (visible: boolean) => void;
-=======
-  onGender: (value: GenderValue) => void;
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
+
+
   onOldPassword: (value: string) => void;
   onNewPassword: (value: string) => void;
   onConfirmPassword: (value: string) => void;
@@ -393,21 +329,11 @@ function EditProfile(props: {
         </View>
 
         <FormInput label="Nama Lengkap" value={props.fullName} onChangeText={props.onName} icon="person-outline" />
-<<<<<<< HEAD
         <FormInput label="Nomor HP" value={props.phone} onChangeText={props.onPhone} keyboardType="phone-pad" icon="call-outline" />
         <GenderPicker value={props.gender} onChange={props.onGender} />
         
-        <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>Lokasi Kota</Text>
-          <Pressable onPress={() => props.setCityModal(true)} style={styles.inputShell}>
-            <Text style={{ flex: 1, color: props.cityName ? '#222' : '#BDBDBD' }}>{props.cityName || 'Pilih Kota...'}</Text>
-            <Ionicons name="location-outline" size={22} color="#AFAFAF" />
-          </Pressable>
-        </View>
 
-=======
-        <GenderPicker value={props.gender} onChange={props.onGender} />
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
+
         <FormInput label="Old Password" value={props.oldPassword} onChangeText={props.onOldPassword} secureTextEntry icon="lock-closed-outline" />
         <View style={styles.splitRow}>
           <View style={styles.splitCell}>
@@ -852,11 +778,7 @@ const styles = StyleSheet.create({
   formContent: {
     paddingHorizontal: 30,
     paddingTop: 24,
-<<<<<<< HEAD
     paddingBottom: 120,
-=======
-    paddingBottom: 46,
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
   },
   editAvatarWrap: {
     alignSelf: 'center',
@@ -1110,36 +1032,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-<<<<<<< HEAD
-  cityBox: {
-    width: '100%',
-    height: '70%',
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
-    padding: 26,
-    position: 'absolute',
-    bottom: 0,
-  },
-  cityItem: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  cityText: {
-    fontSize: 16,
-    color: '#111111',
-  },
-  provinceText: {
-    fontSize: 12,
-    color: MUTED,
-    marginTop: 2,
-  },
-=======
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
+
+
+
+
   deleteActions: {
     flexDirection: 'row',
     gap: 9,

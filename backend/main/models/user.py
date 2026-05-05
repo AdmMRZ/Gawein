@@ -53,14 +53,6 @@ class ClientProfile(models.Model):
         on_delete=models.CASCADE,
         related_name='client_profile',
     )
-
-    city = models.ForeignKey(
-        'main.City',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='clients',
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -99,31 +91,13 @@ class PaymentCard(models.Model):
 class ProviderProfile(models.Model):
     """Extended profile for service providers."""
 
-    class Gender(models.TextChoices):
-        MALE = 'male', 'Male'
-        FEMALE = 'female', 'Female'
-        OTHER = 'other', 'Other'
-
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name='provider_profile',
     )
     bio = models.TextField(blank=True, default='')
-    gender = models.CharField(
-        max_length=10,
-        choices=Gender.choices,
-        blank=True,
-        default='',
-    )
     age = models.PositiveIntegerField(null=True, blank=True)
-    city = models.ForeignKey(
-        'main.City',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='providers',
-    )
     years_of_experience = models.PositiveIntegerField(default=0)
     is_verified = models.BooleanField(default=False)
     verification_status = models.CharField(
@@ -144,6 +118,21 @@ class ProviderProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @property
+    def kota_id(self):
+        reg = self.user.registrations.first()
+        return reg.kota_id if reg else None
+
+    @property
+    def kota_name(self):
+        reg = self.user.registrations.first()
+        return reg.kota_name if reg else None
+
+    @property
+    def provinsi_name(self):
+        reg = self.user.registrations.first()
+        return reg.provinsi_name if reg else None
+
     class Meta:
         db_table = 'provider_profiles'
 
@@ -152,8 +141,7 @@ class ProviderProfile(models.Model):
 
 class ProviderRegistration(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='registrations')
-    category_id = models.CharField(max_length=50)
-    category_name = models.CharField(max_length=100)
+    category = models.ForeignKey('main.Category', on_delete=models.CASCADE, related_name='registrations')
     foto_diri = models.TextField(null=True, blank=True)
     
     # Regional Data (External API IDs)

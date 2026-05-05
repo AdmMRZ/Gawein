@@ -5,7 +5,6 @@ from main.models import (
     ClientProfile,
     ProviderProfile,
     Category,
-    Service,
     Availability,
     Booking,
     HiringTransaction,
@@ -16,7 +15,7 @@ from main.models import (
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
-    list_display = ['email', 'username', 'role', 'phone', 'is_active', 'is_verified', 'created_at']
+    list_display = ['email', 'username', 'role', 'phone', 'gender', 'is_active', 'is_verified', 'created_at']
     list_filter = ['role', 'is_active', 'is_verified']
     search_fields = ['email', 'username', 'first_name', 'last_name', 'phone']
     ordering = ['-created_at']
@@ -24,19 +23,19 @@ class UserAdmin(admin.ModelAdmin):
 
 @admin.register(ClientProfile)
 class ClientProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'city']
-    search_fields = ['user__email', 'city__name']
+    list_display = ['user']
+    search_fields = ['user__email']
 
 
 @admin.register(ProviderProfile)
 class ProviderProfileAdmin(admin.ModelAdmin):
     list_display = [
-        'user', 'gender', 'age', 'city',
+        'user', 'age',
         'years_of_experience', 'is_verified', 'verification_status',
         'rating_average', 'total_reviews',
     ]
-    list_filter = ['is_verified', 'verification_status', 'gender']
-    search_fields = ['user__email', 'bio', 'city__name']
+    list_filter = ['is_verified', 'verification_status']
+    search_fields = ['user__email', 'bio']
 
 
 @admin.register(Category)
@@ -45,12 +44,6 @@ class CategoryAdmin(admin.ModelAdmin):
     list_filter = ['is_active']
     search_fields = ['name']
 
-
-@admin.register(Service)
-class ServiceAdmin(admin.ModelAdmin):
-    list_display = ['title', 'provider', 'category', 'price', 'is_active']
-    list_filter = ['is_active', 'category']
-    search_fields = ['title', 'description']
 
 
 @admin.register(Availability)
@@ -61,7 +54,7 @@ class AvailabilityAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ['id', 'client', 'provider', 'service', 'status', 'created_at']
+    list_display = ['id', 'client', 'provider', 'registration', 'status', 'created_at']
     list_filter = ['status']
     search_fields = ['client__email', 'provider__user__email']
 
@@ -69,12 +62,11 @@ class BookingAdmin(admin.ModelAdmin):
 @admin.register(HiringTransaction)
 class HiringTransactionAdmin(admin.ModelAdmin):
     list_display = [
-        'id', 'client', 'provider', 'service',
+        'id', 'client', 'provider', 'registration',
         'agreed_price', 'work_date', 'status', 'created_at',
     ]
     list_filter = ['status']
     search_fields = ['client__email', 'provider__user__email']
-
 
 
 @admin.register(Review)
@@ -83,8 +75,9 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ['rating']
     search_fields = ['client__email', 'provider__user__email', 'comment']
 
+
 @admin.register(ProviderRegistration)
 class ProviderRegistrationAdmin(admin.ModelAdmin):
-    list_display = ['user', 'category_name', 'provinsi_name', 'kota_name', 'created_at']
-    list_filter = ['category_name', 'provinsi_name', 'kota_name']
-    search_fields = ['user__email', 'category_name', 'alamat_lengkap']
+    list_display = ('user', 'category', 'provinsi_name', 'kota_name')
+    list_filter = ('category', 'provinsi_name', 'kota_name')
+    search_fields = ('user__email', 'user__username', 'category__name', 'kota_name')

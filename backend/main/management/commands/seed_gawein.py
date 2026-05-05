@@ -1,38 +1,22 @@
 import random
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from main.models import User, ClientProfile, ProviderProfile, Category, Service, Province, City
+from main.models import User, ClientProfile, ProviderProfile, Category, ProviderRegistration
 
 
 class Command(BaseCommand):
-    help = 'Seed the database with provinces, cities, categories, and dummy users.'
+    help = 'Seed the database with categories, dummy users, and provider registrations.'
 
     def handle(self, *args, **kwargs):
         self.stdout.write("Starting database seeder...")
 
         try:
             with transaction.atomic():
-                self.seed_locations()
                 self.seed_categories()
                 self.seed_users()
             self.stdout.write(self.style.SUCCESS('Successfully seeded database!'))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Error seeding database: {e}"))
-
-    def seed_locations(self):
-        self.stdout.write("Seeding provinces and cities...")
-        provinces_data = {
-            'DKI Jakarta': ['Jakarta Selatan', 'Jakarta Pusat', 'Jakarta Barat', 'Jakarta Timur', 'Jakarta Utara'],
-            'Jawa Barat': ['Bandung', 'Depok', 'Bogor', 'Bekasi'],
-            'Banten': ['Tangerang', 'Tangerang Selatan'],
-            'Jawa Timur': ['Surabaya', 'Malang'],
-            'Bali': ['Denpasar', 'Badung'],
-        }
-
-        for prov_name, cities in provinces_data.items():
-            province, _ = Province.objects.get_or_create(name=prov_name)
-            for city_name in cities:
-                City.objects.get_or_create(province=province, name=city_name)
 
     def seed_categories(self):
         self.stdout.write("Seeding categories...")
@@ -57,9 +41,9 @@ class Command(BaseCommand):
     def seed_users(self):
         self.stdout.write("Seeding dummy users...")
         
-        # Helper cities
-        jaksel = City.objects.get(name='Jakarta Selatan')
-        bandung = City.objects.get(name='Bandung')
+        # Placeholder location IDs
+        LOC_JAKSEL = {'prov': '31', 'kota': '3174', 'nama': 'Jakarta Selatan'}
+        LOC_BANDUNG = {'prov': '32', 'kota': '3273', 'nama': 'Kota Bandung'}
 
         # 1. Admin
         if not User.objects.filter(email='admin@gawein.com').exists():
@@ -74,30 +58,29 @@ class Command(BaseCommand):
                 first_name='Budi',
                 last_name='Pencari',
                 role=User.Role.CLIENT,
-            )
-            ClientProfile.objects.create(
-                user=client_user,
                 phone='081234567890',
-                city=jaksel
+                gender='male'
             )
+            # Profile created by signal usually, but ensure it exists
+            ClientProfile.objects.get_or_create(user=client_user)
 
         # 3. Providers
         providers_info = [
             {
                 'email': 'cleaner@example.com', 'first': 'Siti', 'last': 'Bersih', 'gender': 'female',
-                'age': 28, 'exp': 5, 'city': jaksel, 'cat': 'Pembersih Rumah', 'price': 150000.00
+                'age': 28, 'exp': 5, 'loc': LOC_JAKSEL, 'cat': 'Pembersih Rumah', 'price': 150000.00
             },
             {
                 'email': 'plumber@example.com', 'first': 'Agus', 'last': 'Pipa', 'gender': 'male',
-                'age': 35, 'exp': 8, 'city': jaksel, 'cat': 'Tukang Ledeng', 'price': 250000.00
+                'age': 35, 'exp': 8, 'loc': LOC_JAKSEL, 'cat': 'Tukang Ledeng', 'price': 250000.00
             },
             {
                 'email': 'electrician@example.com', 'first': 'Bambang', 'last': 'Setrum', 'gender': 'male',
-                'age': 42, 'exp': 15, 'city': bandung, 'cat': 'Tukang Listrik', 'price': 300000.00
+                'age': 42, 'exp': 15, 'loc': LOC_BANDUNG, 'cat': 'Tukang Listrik', 'price': 300000.00
             },
             {
                 'email': 'painter@example.com', 'first': 'Joko', 'last': 'Kuas', 'gender': 'male',
-                'age': 30, 'exp': 3, 'city': bandung, 'cat': 'Tukang Cat', 'price': 400000.00
+                'age': 30, 'exp': 3, 'loc': LOC_BANDUNG, 'cat': 'Tukang Cat', 'price': 400000.00
             },
         ]
 
@@ -110,28 +93,36 @@ class Command(BaseCommand):
                     first_name=p_info['first'],
                     last_name=p_info['last'],
                     role=User.Role.PROVIDER,
-                    gender=p_info['gender']
+                    gender=p_info['gender'],
+                    phone=f"08{random.randint(100000000, 999999999)}"
                 )
                 
-                profile = ProviderProfile.objects.create(
+                profile, _ = ProviderProfile.objects.get_or_create(
                     user=p_user,
-                    bio=f"Saya {p_info['first']} siap membantu anda dengan pengalaman {p_info['exp']} tahun.",
-                    gender=p_info['gender'],
-                    age=p_info['age'],
-                    city=p_info['city'],
-                    years_of_experience=p_info['exp'],
-                    is_verified=True,  # Important for visibility
-                    verification_status='verified',
-                    rating_average=round(random.uniform(4.0, 5.0), 1),
-                    total_reviews=random.randint(10, 100)
+                    defaults={
+                        'bio': f"Saya {p_info['first']} siap membantu anda dengan pengalaman {p_info['exp']} tahun.",
+                        'age': p_info['age'],
+                        'years_of_experience': p_info['exp'],
+                        'is_verified': True,
+                        'verification_status': 'verified',
+                        'rating_average': round(random.uniform(4.0, 5.0), 1),
+                        'total_reviews': random.randint(10, 100)
+                    }
                 )
 
                 category = Category.objects.get(name=p_info['cat'])
-                Service.objects.create(
-                    provider=profile,
+                
+
+
+                # Create ProviderRegistration (Source of truth for location search)
+                ProviderRegistration.objects.create(
+                    user=p_user,
                     category=category,
-                    title=f"Jasa {p_info['cat']} oleh {p_info['first']}",
-                    description=f"Layanan {p_info['cat']} profesional, cepat, dan terpercaya.",
-                    price=p_info['price'],
-                    city=p_info['city'],
+                    provinsi_id=p_info['loc']['prov'],
+                    kota_id=p_info['loc']['kota'],
+                    provinsi_name=p_info['loc']['nama'].split(' ')[-1], # Simple split for demo
+                    kota_name=p_info['loc']['nama'],
+                    pengalaman=f"Berpengalaman dalam {p_info['cat']}",
+                    tahun_pengalaman=p_info['exp'],
+                    gaji_diharapkan=p_info['price']
                 )

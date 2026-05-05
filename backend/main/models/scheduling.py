@@ -47,8 +47,8 @@ class Booking(models.Model):
         on_delete=models.CASCADE,
         related_name='bookings',
     )
-    service = models.ForeignKey(
-        'main.Service',
+    registration = models.ForeignKey(
+        'main.ProviderRegistration',
         on_delete=models.CASCADE,
         related_name='bookings',
     )

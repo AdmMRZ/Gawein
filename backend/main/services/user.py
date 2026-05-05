@@ -16,8 +16,6 @@ class UserService:
             if profile:
                 profile_data = {
                     'id': profile.id,
-
-                    'city': profile.city.name if profile.city else '', 'city_id': profile.city_id,
                 }
         elif user.role == 'provider':
             profile = UserRepository.get_provider_profile(user)
@@ -25,9 +23,7 @@ class UserService:
                 profile_data = {
                     'id': profile.id,
                     'bio': profile.bio,
-                    'gender': profile.gender,
                     'age': profile.age,
-                    'city': profile.city.name if profile.city else '', 'city_id': profile.city_id,
                     'years_of_experience': profile.years_of_experience,
                     'is_verified': profile.is_verified,
                     'verification_status': profile.verification_status,
@@ -70,13 +66,12 @@ class UserService:
         if user.role == 'client':
             profile = UserRepository.get_client_profile(user)
             if profile:
-                profile_fields = {k: v for k, v in data.items() if k in ['city_id']}
-                if profile_fields:
-                    UserRepository.update_client_profile(profile, **profile_fields)
+                # ClientProfile has no custom fields for now
+                pass
         elif user.role == 'provider':
             profile = UserRepository.get_provider_profile(user)
             if profile:
-                allowed = ['bio', 'gender', 'age', 'city_id', 'years_of_experience']
+                allowed = ['bio', 'age', 'years_of_experience']
                 profile_fields = {k: v for k, v in data.items() if k in allowed}
                 if profile_fields:
                     UserRepository.update_provider_profile(profile, **profile_fields)
@@ -87,9 +82,8 @@ class UserService:
     def register_provider_category(user, data: dict):
         """Save detailed provider registration for a specific category."""
         from main.models import ProviderRegistration
-        
-        # We don't save name/email/phone here because they are in User model
-        # But we update User model if they were provided in the registration form
+
+        # Update User fields from registration form if provided
         user_updates = {}
         if 'nama_lengkap' in data:
             name_parts = data['nama_lengkap'].split(' ')
@@ -99,13 +93,13 @@ class UserService:
             user_updates['phone'] = data['nomor_telepon']
         if 'gender' in data:
             user_updates['gender'] = data['gender']
-            
+
         if user_updates:
             for k, v in user_updates.items():
                 setattr(user, k, v)
             user.save()
 
-        # Save the detailed registration
+        # Save the detailed registration (Lapak)
         registration = ProviderRegistration.objects.create(
             user=user,
             category_id=data.get('category_id'),
@@ -122,16 +116,14 @@ class UserService:
             alamat_lengkap=data.get('alamat_lengkap'),
             pengalaman=data.get('pengalaman'),
             tahun_pengalaman=data.get('tahun_pengalaman', 0),
-            gaji_diharapkan=data.get('gaji_diharapkan')
+            gaji_diharapkan=data.get('gaji_diharapkan'),
         )
-        
-        # Also update the main ProviderProfile to keep them in sync
+
+        # Also update ProviderProfile with experience summary
         profile = UserRepository.get_provider_profile(user)
         if profile:
             profile.bio = data.get('pengalaman', profile.bio)
             profile.years_of_experience = data.get('tahun_pengalaman', profile.years_of_experience)
-            # For city, we try to match our internal City ID if possible, 
-            # otherwise we just rely on the detailed location fields in registration.
             profile.save()
-            
+
         return registration

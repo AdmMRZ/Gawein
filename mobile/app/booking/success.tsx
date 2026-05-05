@@ -1,9 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, Platform, Animated, Easing } from 'react-native';
+import { View, Text, Pressable, Animated, Easing } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
 
-// ── Confetti Particle ──────────────────────────────────────
+const PAGE_BG = '#F8FAFF';
+const SUCCESS_SOFT = '#EAF8F2';
+const CONFETTI_COLORS = ['#F59E0B', '#315BE8', '#10B981', '#EF4444', '#38BDF8', '#EC4899', '#FCD34D'];
+
 function ConfettiParticle({
   x,
   color,
@@ -55,9 +59,6 @@ function ConfettiParticle({
   );
 }
 
-// ── Confetti Burst ─────────────────────────────────────────
-const CONFETTI_COLORS = ['#F59E0B', '#6366F1', '#10B981', '#EF4444', '#38BDF8', '#EC4899', '#FCD34D'];
-
 function ConfettiBurst({ width = 300 }: { width?: number }) {
   const particles = Array.from({ length: 30 }, (_, i) => ({
     id: i,
@@ -76,7 +77,6 @@ function ConfettiBurst({ width = 300 }: { width?: number }) {
   );
 }
 
-// ── Main Screen ────────────────────────────────────────────
 export default function BookingSuccessScreen() {
   const { hiringId } = useLocalSearchParams<{ hiringId: string }>();
   const router = useRouter();
@@ -108,47 +108,44 @@ export default function BookingSuccessScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cream }}>
+    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* Content */}
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: Spacing.xl }}>
-
-        {/* Confetti Effect */}
         <View style={{ position: 'absolute', top: '15%', alignSelf: 'center' }}>
           <ConfettiBurst width={320} />
         </View>
 
-        {/* Animated Card */}
         <Animated.View
           style={{
             width: '100%',
-            backgroundColor: Colors.slate900,
+            backgroundColor: Colors.white,
             borderRadius: Radius.xl * 1.5,
             padding: Spacing.xl,
             alignItems: 'center',
             gap: Spacing.lg,
-            borderWidth: 1, borderColor: Colors.grayLight,
+            borderWidth: 1,
+            borderColor: '#E4EAFF',
             transform: [{ scale: scaleAnim }],
             opacity: fadeAnim,
-            shadowColor: Colors.primary,
+            shadowColor: Colors.navy,
             shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.3,
+            shadowOpacity: 0.18,
             shadowRadius: 20,
             elevation: 12,
           }}
         >
-          {/* Icon */}
           <View style={{
-            width: 100, height: 100,
+            width: 100,
+            height: 100,
             borderRadius: 50,
-            backgroundColor: Colors.successSoft,
-            justifyContent: 'center', alignItems: 'center',
+            backgroundColor: SUCCESS_SOFT,
+            justifyContent: 'center',
+            alignItems: 'center',
           }}>
-            <Text style={{ fontSize: 52 }}>🎉</Text>
+            <Ionicons name="checkmark-circle-outline" size={58} color={Colors.success} />
           </View>
 
-          {/* Title */}
           <Text style={{
             fontSize: FontSize.xl,
             fontWeight: FontWeight.bold,
@@ -159,42 +156,42 @@ export default function BookingSuccessScreen() {
             Selamat! Proses rekrut penyedia jasa Anda telah berhasil.
           </Text>
 
-          {/* Description */}
           <Text style={{
             fontSize: FontSize.sm,
             color: Colors.textSecondary,
             textAlign: 'center',
             lineHeight: 22,
           }}>
-            Terima kasih telah mempercayakan kebutuhan layanan Anda kepada Gawein. Kami berharap dapat membantu Anda dalam rekrutmen selanjutnya.
+            Terima kasih telah mempercayakan kebutuhan layanan Anda kepada GaweIn. Kami berharap dapat membantu Anda dalam rekrutmen selanjutnya.
           </Text>
 
-          {/* Hiring ID chip */}
-          {hiringId && (
+          {hiringId ? (
             <View style={{
-              backgroundColor: Colors.primary + '20',
+              backgroundColor: Colors.navyLight,
               borderRadius: Radius.pill,
               paddingHorizontal: Spacing.md,
               paddingVertical: 6,
-              borderWidth: 1, borderColor: Colors.primary + '40',
+              borderWidth: 1,
+              borderColor: '#C9D6FF',
             }}>
-              <Text style={{ fontSize: FontSize.xs, color: Colors.primary, fontWeight: FontWeight.semibold }}>
+              <Text style={{ fontSize: FontSize.xs, color: Colors.navy, fontWeight: FontWeight.semibold }}>
                 ID Pesanan #{hiringId}
               </Text>
             </View>
-          )}
+          ) : null}
 
-          {/* CTA Button */}
           <Pressable
             onPress={handleDone}
             style={({ pressed }) => ({
               width: '100%',
-              backgroundColor: Colors.warning,
+              backgroundColor: Colors.gold,
               borderRadius: Radius.xl,
               paddingVertical: 16,
               alignItems: 'center',
               opacity: pressed ? 0.85 : 1,
               marginTop: Spacing.sm,
+              borderWidth: 1,
+              borderColor: '#E5B82F',
             })}
           >
             <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#1a1a1a' }}>
@@ -202,10 +199,9 @@ export default function BookingSuccessScreen() {
             </Text>
           </Pressable>
 
-          {/* View History Link */}
           <Pressable onPress={() => router.replace('/(client)/history')}>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.primary, fontWeight: FontWeight.medium }}>
-              Lihat Riwayat Pesanan →
+            <Text style={{ fontSize: FontSize.sm, color: Colors.navy, fontWeight: FontWeight.medium }}>
+              Lihat Riwayat Pesanan {'->'}
             </Text>
           </Pressable>
         </Animated.View>

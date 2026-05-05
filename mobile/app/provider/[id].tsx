@@ -3,82 +3,44 @@ import { Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { Link, Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { providerService } from '@/services/provider';
-import { reviewService } from '@/services/review';
 import { chatService } from '@/services/chat';
 import { LoadingScreen } from '@/components/ui/loading-screen';
-import type { ProviderProfile, Review } from '@/types';
+import { Colors } from '@/constants/theme';
+import type { ProviderProfile } from '@/types';
 
-const BLUE = '#315BE8';
-const YELLOW = '#FFD45A';
+const BLUE = Colors.navy;
+const BLUE_DARK = Colors.navyDark;
+const BLUE_SOFT = '#EEF3FF';
+const YELLOW = Colors.gold;
 const PALE_YELLOW = '#FFF0B8';
 const TEXT = '#111111';
-const BORDER = '#D9D9D9';
-
-const fallbackReviews = [
-  { client_name: 'Lisa', rating: 3, comment: 'Yayan sering terlambat', created_at: '2025-11-01T00:00:00.000Z' },
-  { client_name: 'Rose', rating: 5, comment: 'Skill menyetir baik, selalu tepat waktu', created_at: '2025-04-01T00:00:00.000Z' },
-  { client_name: 'Jisoo', rating: 4, comment: 'Bisa manual dan matic, kadang terlambat', created_at: '2025-01-01T00:00:00.000Z' },
-  { client_name: 'Mingyu', rating: 5, comment: 'Aman dan sabar di jalan, recommended!', created_at: '2024-03-01T00:00:00.000Z' },
-  { client_name: 'Krystal', rating: 4, comment: 'Komunikatif dan tahu rute dengan baik.', created_at: '2024-01-01T00:00:00.000Z' },
-  { client_name: 'Sehun', rating: 4, comment: 'Pelayanan bagus, responsif kalau mendadak.', created_at: '2023-10-01T00:00:00.000Z' },
-  { client_name: 'Rose', rating: 5, comment: 'Sudah beberapa kali pakai jasanya, selalu puas!', created_at: '2023-06-01T00:00:00.000Z' },
-  { client_name: 'Jisoo', rating: 4, comment: 'Bisa manual dan matic, kadang terlambat', created_at: '2023-02-01T00:00:00.000Z' },
-  { client_name: 'Karina', rating: 3, comment: 'Nyetirnya agak ngebut, bikin kurang nyaman.', created_at: '2022-12-01T00:00:00.000Z' },
-  { client_name: 'Sungchan', rating: 4, comment: 'Tidak membantu dengan barang bawaan.', created_at: '2021-07-01T00:00:00.000Z' },
-].map((item, index) => ({ id: -index - 1, hiring: 0, client: 0, client_email: '', provider: 0, provider_name: '', ...item }));
+const MUTED = '#737373';
 
 export default function ProviderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [provider, setProvider] = useState<ProviderProfile | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'scope' | 'limitations'>('scope');
-  const [showAllReviews, setShowAllReviews] = useState(false);
 
   const [isChatting, setIsChatting] = useState(false);
 
   useEffect(() => {
-    Promise.all([providerService.getDetail(Number(id)), reviewService.list(Number(id))])
-      .then(([providerRes, reviewRes]) => {
-        setProvider(providerRes);
-        setReviews(reviewRes.length ? reviewRes : fallbackReviews);
-      })
+    providerService.getDetail(Number(id))
+      .then(setProvider)
       .catch(() => {
         setProvider(demoProvider(Number(id) || 1));
-        setReviews(fallbackReviews);
       })
       .finally(() => setLoading(false));
   }, [id]);
 
-  const service = provider?.services?.[0];
+  const registration = provider?.registrations?.[0];
   const fullName = provider ? `${provider.user.first_name} ${provider.user.last_name}`.trim() || 'Pekerja GaweIn' : '';
-  const scopeItems = useMemo(() => lines(service?.service_scope, [
-    'Mengantar dan menjemput sesuai jadwal',
-    'Menjaga kebersihan dan kondisi kendaraan',
-    'Membantu perjalanan dalam dan luar kota',
-  ]), [service?.service_scope]);
-  const limitationItems = useMemo(() => lines(service?.service_limitations, [
-    'Tidak mengemudi kendaraan tidak layak jalan',
-    'Tidak membawa barang berisiko tinggi',
-    'Tidak menanggung biaya operasional',
-  ]), [service?.service_limitations]);
+  const experienceItems = useMemo(() => lines(registration?.pengalaman, [
+    'Penyedia belum menambahkan detail pengalaman.',
+  ]), [registration?.pengalaman]);
 
   if (loading) return <LoadingScreen />;
   if (!provider) return <LoadingScreen message="Penyedia tidak ditemukan" />;
-
-  if (showAllReviews) {
-    return (
-      <ScrollView style={{ flex: 1, backgroundColor: '#FFFFFF' }} contentContainerStyle={{ width: '100%', maxWidth: 390, alignSelf: 'center', paddingHorizontal: 34, paddingTop: 58, paddingBottom: 40 }}>
-        <Stack.Screen options={{ headerShown: false }} />
-        <BackButton onPress={() => setShowAllReviews(false)} />
-        <Text style={{ fontWeight: '900', color: TEXT, marginBottom: 14 }}>Ulasan</Text>
-        <View style={{ gap: 9 }}>
-          {reviews.map((review, index) => <ReviewCard key={`${review.id}-${index}`} review={review} index={index} />)}
-        </View>
-      </ScrollView>
-    );
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
@@ -104,28 +66,29 @@ export default function ProviderDetailScreen() {
             {provider.bio || 'Saya sopir yang mengutamakan kenyamanan dan keamanan penumpang. Terbiasa mengemudi jarak dekat maupun jauh dengan disiplin waktu dan tanggung jawab tinggi.'}
           </Text>
 
-          <View style={{ backgroundColor: PALE_YELLOW, borderRadius: 20, padding: 5, flexDirection: 'row', marginTop: 24, marginBottom: 14 }}>
-            <Segment label="Cakupan Layanan" active={tab === 'scope'} onPress={() => setTab('scope')} />
-            <Segment label="Batasan Layanan" active={tab === 'limitations'} onPress={() => setTab('limitations')} />
+          <DetailPanel
+            category={registration?.category_name || 'Belum ada kategori'}
+            location={[registration?.kota_name, registration?.provinsi_name].filter(Boolean).join(', ') || 'Belum ada lokasi'}
+            years={`${registration?.tahun_pengalaman ?? (provider.years_of_experience || 0)} tahun`}
+            price={formatPrice(registration?.gaji_diharapkan)}
+          />
+
+          <View style={styles.experienceBlock}>
+            <View style={styles.sectionHeadingRow}>
+              <View style={styles.sectionMark} />
+              <Text style={styles.sectionHeading}>Pengalaman Kerja</Text>
+            </View>
+            <View style={styles.experienceList}>
+              {experienceItems.map((item) => (
+                <View key={item} style={styles.experienceItem}>
+                  <View style={styles.dot} />
+                  <Text style={styles.experienceText}>{item}</Text>
+                </View>
+              ))}
+            </View>
           </View>
 
-          {(tab === 'scope' ? scopeItems : limitationItems).map((item) => (
-            <Text key={item} style={{ color: TEXT, fontSize: 17, lineHeight: 27 }}>{'\u2022'}  {item}</Text>
-          ))}
-
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 24, marginBottom: 16 }}>
-            <Text style={{ color: TEXT, fontSize: 21, fontWeight: '900' }}>Ulasan ({reviews.length})</Text>
-            <Pressable onPress={() => setShowAllReviews(true)}>
-              <Text style={{ color: TEXT, fontSize: 12, textDecorationLine: 'underline' }}>Lihat Semua</Text>
-            </Pressable>
-          </View>
-
-          <Text style={{ color: TEXT, fontSize: 15, marginBottom: 14 }}>Ulasan Terbaik</Text>
-          <View style={{ gap: 9 }}>
-            {reviews.slice(0, 3).map((review, index) => <ReviewCard key={`${review.id}-${index}`} review={review} index={index} />)}
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 28 }}>
             <Pressable 
               onPress={async () => {
                 if (isChatting) return;
@@ -145,8 +108,8 @@ export default function ProviderDetailScreen() {
               <Ionicons name="chatbubble-ellipses-outline" size={18} color={TEXT} />
               <Text style={styles.bottomText}>Kirim Pesan</Text>
             </Pressable>
-            {service ? (
-              <Link href={`/booking/${service.id}`} asChild>
+            {registration ? (
+              <Link href={`/booking/${registration.id}`} asChild>
                 <Pressable style={styles.bottomButton}>
                   <Ionicons name="calendar-outline" size={18} color={TEXT} />
                   <Text style={styles.bottomText}>Atur Jadwal</Text>
@@ -174,45 +137,199 @@ function BackButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function Segment({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+function DetailPanel({ category, location, years, price }: { category: string; location: string; years: string; price: string }) {
   return (
-    <Pressable onPress={onPress} style={{ flex: 1, borderRadius: 16, backgroundColor: active ? YELLOW : 'transparent', height: 35, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: TEXT, fontSize: 16, fontWeight: active ? '900' : '500' }}>{label}</Text>
-    </Pressable>
+    <View style={styles.detailShell}>
+      <View style={styles.detailCard}>
+        <View style={styles.detailHeader}>
+          <View>
+            <Text style={styles.eyebrow}>PENDAFTARAN AKTIF</Text>
+            <Text style={styles.detailTitle}>Detail Pekerjaan</Text>
+          </View>
+          <View style={styles.categoryPill}>
+            <Ionicons name="sparkles-outline" size={13} color={BLUE_DARK} />
+            <Text style={styles.categoryPillText} numberOfLines={1}>{category}</Text>
+          </View>
+        </View>
+
+        <View style={styles.detailGrid}>
+          <DetailRow icon="location-outline" label="Lokasi" value={location} />
+          <DetailRow icon="briefcase-outline" label="Pengalaman" value={years} />
+          <DetailRow icon="cash-outline" label="Gaji diharapkan" value={price} emphasis />
+        </View>
+      </View>
+    </View>
   );
 }
 
-function ReviewCard({ review, index }: { review: Review; index: number }) {
+function DetailRow({ icon, label, value, emphasis }: { icon: keyof typeof Ionicons.glyphMap; label: string; value: string; emphasis?: boolean }) {
   return (
-    <View style={{ minHeight: 66, borderRadius: 13, borderWidth: 1, borderColor: BORDER, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, gap: 12, backgroundColor: '#FFFFFF' }}>
-      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' }}>
-        <Ionicons name="person" size={28} color="#CCCCCC" />
+    <View style={styles.detailRow}>
+      <View style={[styles.detailIcon, emphasis && styles.detailIconEmphasis]}>
+        <Ionicons name={icon} size={18} color={emphasis ? TEXT : BLUE} />
       </View>
       <View style={{ flex: 1 }}>
-        <Text style={{ color: TEXT, fontSize: 16, fontWeight: '900' }}>
-          {review.client_name}, <Text style={{ fontSize: 13, fontWeight: '500' }}>{formatMonth(review.created_at)}</Text>
-        </Text>
-        <Text style={{ color: TEXT, fontSize: 13 }} numberOfLines={2}>{review.comment}</Text>
-      </View>
-      <View style={{ flexDirection: 'row' }}>
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Ionicons key={star} name="star" size={14} color={star <= review.rating ? YELLOW : '#D4D4D4'} />
-        ))}
+        <Text style={styles.detailLabel}>{label}</Text>
+        <Text style={[styles.detailValue, emphasis && styles.detailValueEmphasis]} numberOfLines={2}>{value}</Text>
       </View>
     </View>
   );
 }
 
 const styles = {
+  detailShell: {
+    backgroundColor: '#F3F6FF',
+    borderRadius: 28,
+    padding: 5,
+    marginTop: 24,
+    shadowColor: BLUE,
+    shadowOpacity: 0.13,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 6,
+  },
+  detailCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 23,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: '#E4EAFF',
+    gap: 16,
+  },
+  detailHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    justifyContent: 'space-between' as const,
+    gap: 12,
+  },
+  eyebrow: {
+    color: BLUE,
+    fontSize: 10,
+    fontWeight: '900' as const,
+    letterSpacing: 1.2,
+  },
+  detailTitle: {
+    color: TEXT,
+    fontSize: 21,
+    fontWeight: '900' as const,
+    marginTop: 3,
+  },
+  categoryPill: {
+    maxWidth: 128,
+    minHeight: 31,
+    borderRadius: 16,
+    backgroundColor: BLUE_SOFT,
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 5,
+    paddingHorizontal: 10,
+  },
+  categoryPillText: {
+    color: BLUE_DARK,
+    fontSize: 11,
+    fontWeight: '900' as const,
+    flexShrink: 1,
+  },
+  detailGrid: {
+    gap: 10,
+  },
+  detailRow: {
+    minHeight: 58,
+    borderRadius: 18,
+    backgroundColor: '#F8FAFF',
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+  },
+  detailIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EAF0FF',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  detailIconEmphasis: {
+    backgroundColor: YELLOW,
+  },
+  detailLabel: {
+    color: MUTED,
+    fontSize: 11,
+    fontWeight: '700' as const,
+    marginBottom: 2,
+  },
+  detailValue: {
+    color: TEXT,
+    fontSize: 15,
+    fontWeight: '900' as const,
+    lineHeight: 20,
+  },
+  detailValueEmphasis: {
+    color: BLUE_DARK,
+  },
+  experienceBlock: {
+    marginTop: 24,
+  },
+  sectionHeadingRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 9,
+    marginBottom: 11,
+  },
+  sectionMark: {
+    width: 8,
+    height: 22,
+    borderRadius: 4,
+    backgroundColor: YELLOW,
+  },
+  sectionHeading: {
+    color: TEXT,
+    fontSize: 19,
+    fontWeight: '900' as const,
+  },
+  experienceList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: '#ECECEC',
+    padding: 15,
+    gap: 11,
+  },
+  experienceItem: {
+    flexDirection: 'row' as const,
+    alignItems: 'flex-start' as const,
+    gap: 10,
+  },
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: BLUE,
+    marginTop: 9,
+  },
+  experienceText: {
+    flex: 1,
+    color: TEXT,
+    fontSize: 16,
+    lineHeight: 25,
+    fontWeight: '600' as const,
+  },
   bottomButton: {
     flex: 1,
-    height: 38,
-    borderRadius: 8,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: YELLOW,
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
     gap: 8,
+    shadowColor: '#B59112',
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 7 },
+    elevation: 3,
   },
   bottomText: {
     color: TEXT,
@@ -226,8 +343,10 @@ function lines(value: string | undefined, fallback: string[]) {
   return parsed?.length ? parsed : fallback;
 }
 
-function formatMonth(value: string) {
-  return new Date(value).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+function formatPrice(value?: string) {
+  const price = Number.parseInt(value || '0', 10);
+  if (!price) return 'Belum ditentukan';
+  return `Rp${price.toLocaleString('id-ID')}`;
 }
 
 
@@ -248,29 +367,28 @@ function demoProvider(id: number): ProviderProfile {
       updated_at: '',
     },
     bio: 'Saya sopir yang mengutamakan kenyamanan dan keamanan penumpang. Terbiasa mengemudi jarak dekat maupun jauh dengan disiplin waktu dan tanggung jawab tinggi.',
-    gender: 'Laki-laki',
     age: 33,
-    location: 'Dalam Kota',
     years_of_experience: 7,
     is_verified: true,
     verification_status: 'verified',
     rating_average: '4.5',
     total_reviews: 10,
+    kota_id: '3174',
+    kota_name: 'Jakarta Selatan',
+    provinsi_name: 'DKI Jakarta',
     created_at: '',
     updated_at: '',
-    services: [{
+    registrations: [{
       id,
-      provider: id,
-      category: null,
+      category: 1,
       category_name: 'Transportasi',
-      provider_name: 'Yayan Sukayan',
-      title: 'Sopir Mobil',
-      description: 'Sopir mobil profesional',
-      price: '3500000',
-      location: 'Dalam Kota',
-      service_scope: '',
-      service_limitations: '',
-      is_active: true,
+      provinsi_id: '31',
+      kota_id: '3174',
+      provinsi_name: 'DKI Jakarta',
+      kota_name: 'Jakarta Selatan',
+      pengalaman: 'Sopir mobil profesional selama 7 tahun.',
+      tahun_pengalaman: 7,
+      gaji_diharapkan: '3500000',
       created_at: '',
       updated_at: '',
     }],

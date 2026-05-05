@@ -10,7 +10,6 @@ export interface RegisterData {
   last_name?: string;
   role: 'client' | 'provider';
   phone?: string;
-  location?: string;
   bio?: string;
   gender?: string;
   age?: number;

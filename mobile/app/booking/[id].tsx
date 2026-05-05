@@ -5,22 +5,29 @@ import {
   ScrollView,
   Pressable,
   Modal,
-  Image,
   Platform,
+  TextInput,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { providerService } from '@/services/provider';
 import { Avatar } from '@/components/ui/avatar';
 import { LoadingScreen } from '@/components/ui/loading-screen';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
-import type { Service, ProviderProfile } from '@/types';
+import type { ProviderRegistration, ProviderProfile } from '@/types';
 
 // ── Constants ──────────────────────────────────────────────
-const BLUE = '#315BE8';
-const BLUE_LIGHT = '#E8EEFF';
-const GOLD = '#FFD45A';
-const DAY_LABELS = ['SAN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+const BLUE = Colors.navy;
+const BLUE_LIGHT = Colors.navyLight;
+const GOLD = Colors.gold;
+const GOLD_DARK = '#E5B82F';
+const PAGE_BG = '#F8FAFF';
+const SURFACE = '#FFFFFF';
+const BORDER = '#E4EAFF';
+const TEXT = '#111111';
+const MUTED = '#6E7480';
+const DAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
 const MONTH_NAMES = [
   'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
@@ -44,12 +51,6 @@ function getFirstDayOfMonth(year: number, month: number) {
 
 function pad(n: number) {
   return String(n).padStart(2, '0');
-}
-
-function formatDateLabel(year: number, month: number, day: number) {
-  const date = new Date(year, month, day);
-  const dayName = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][date.getDay()];
-  return `${MONTH_NAMES[month]} ${year}\n${dayName}`;
 }
 
 // ── Time Picker Spinner Modal ───────────────────────────────
@@ -206,10 +207,19 @@ function CalendarGrid({
   const today = new Date();
   const isThisMonth = today.getFullYear() === year && today.getMonth() === month;
 
-  const cells: (number | null)[] = [
+  const baseCells: (number | null)[] = [
     ...Array(firstDay).fill(null),
     ...Array.from({ length: totalDays }, (_, i) => i + 1),
   ];
+  const trailingEmptyCells = (7 - (baseCells.length % 7)) % 7;
+  const cells: (number | null)[] = [
+    ...baseCells,
+    ...Array(trailingEmptyCells).fill(null),
+  ];
+  const weeks: (number | null)[][] = [];
+  for (let i = 0; i < cells.length; i += 7) {
+    weeks.push(cells.slice(i, i + 7));
+  }
 
   const inRange = (day: number) => {
     if (mode !== 'rentang' || !selectedStart || !selectedEnd) return false;
@@ -234,42 +244,66 @@ function CalendarGrid({
       </View>
 
       {/* Day cells */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        {cells.map((day, i) => {
-          if (!day) return <View key={`empty-${i}`} style={{ width: `${100 / 7}%`, aspectRatio: 1 }} />;
+      <View style={{ gap: 2 }}>
+        {weeks.map((week, weekIndex) => (
+          <View key={`week-${weekIndex}`} style={{ flexDirection: 'row' }}>
+            {week.map((day, dayIndex) => {
+              if (!day) {
+                return <View key={`empty-${weekIndex}-${dayIndex}`} style={{ flex: 1, aspectRatio: 1 }} />;
+              }
 
-          const selected = isSelected(day);
-          const ranged = inRange(day);
-          const past = isPast(day);
+              const selected = isSelected(day);
+              const ranged = inRange(day);
+              const past = isPast(day);
+              const hasRange = mode === 'rentang' && selectedStart !== null && selectedEnd !== null;
+              const isStart = hasRange && day === selectedStart;
+              const isEnd = hasRange && day === selectedEnd;
+              const showRangeFill = hasRange && (selected || ranged);
 
-          return (
-            <Pressable
-              key={day}
-              onPress={() => !past && onSelectDay(day)}
-              style={{
-                width: `${100 / 7}%`,
-                aspectRatio: 1,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: ranged ? BLUE_LIGHT : 'transparent',
-              }}
-            >
-              <View style={{
-                width: 32, height: 32, borderRadius: 16,
-                justifyContent: 'center', alignItems: 'center',
-                backgroundColor: selected ? BLUE : 'transparent',
-              }}>
-                <Text style={{
-                  fontSize: 13,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.regular,
-                  color: past ? '#ccc' : selected ? '#fff' : '#111',
-                }}>
-                  {day}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+              return (
+                <Pressable
+                  key={day}
+                  onPress={() => !past && onSelectDay(day)}
+                  style={{
+                    flex: 1,
+                    aspectRatio: 1,
+                    justifyContent: 'center',
+                    alignItems: 'stretch',
+                    opacity: past ? 0.45 : 1,
+                  }}
+                >
+                  <View style={{
+                    height: 36,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    backgroundColor: showRangeFill ? BLUE_LIGHT : 'transparent',
+                    borderTopLeftRadius: isStart ? 18 : 0,
+                    borderBottomLeftRadius: isStart ? 18 : 0,
+                    borderTopRightRadius: isEnd ? 18 : 0,
+                    borderBottomRightRadius: isEnd ? 18 : 0,
+                  }}>
+                    <View style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 17,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: selected ? BLUE : 'transparent',
+                    }}>
+                      <Text style={{
+                        fontSize: 13,
+                        fontWeight: selected ? FontWeight.bold : FontWeight.regular,
+                        color: past ? '#C7CBD3' : selected ? '#fff' : '#111',
+                      }}>
+                        {day}
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -284,8 +318,9 @@ function timeStr(h: number, m: number, ampm: 'AM' | 'PM') {
 export default function BookingScheduleScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
-  const [service, setService] = useState<Service | null>(null);
+  const [registration, setRegistration] = useState<ProviderRegistration | null>(null);
   const [provider, setProvider] = useState<ProviderProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -304,6 +339,7 @@ export default function BookingScheduleScreen() {
   // Times
   const [startTime, setStartTime] = useState({ hour: 10, minute: 0, ampm: 'AM' as 'AM' | 'PM' });
   const [endTime, setEndTime] = useState({ hour: 10, minute: 0, ampm: 'AM' as 'AM' | 'PM' });
+  const [location, setLocation] = useState('');
 
   // Modals
   const [showTimePicker, setShowTimePicker] = useState<'start' | 'end' | null>(null);
@@ -314,8 +350,8 @@ export default function BookingScheduleScreen() {
       try {
         const providers = await providerService.list();
         for (const p of providers) {
-          const svc = p.services?.find((s: Service) => s.id === Number(id));
-          if (svc) { setService(svc); setProvider(p); break; }
+          const reg = p.registrations?.find((r: ProviderRegistration) => r.id === Number(id));
+          if (reg) { setRegistration(reg); setProvider(p); break; }
         }
       } catch { /* ignore */ }
       finally { setLoading(false); }
@@ -327,7 +363,7 @@ export default function BookingScheduleScreen() {
   const providerName = provider
     ? `${provider.user.first_name} ${provider.user.last_name}`.trim()
     : DUMMY_PROVIDER.name;
-  const roleName = service?.category_name ?? DUMMY_PROVIDER.role;
+  const roleName = registration?.category_name ?? DUMMY_PROVIDER.role;
 
   const handleDaySelect = (day: number) => {
     if (mode === 'harian') {
@@ -358,7 +394,7 @@ export default function BookingScheduleScreen() {
     else setCalMonth(m => m + 1);
   };
 
-  const canProceed = selectedStart !== null;
+  const canProceed = selectedStart !== null && location.trim().length > 0;
 
   const handleSelanjutnya = () => {
     if (!canProceed) return;
@@ -370,14 +406,14 @@ export default function BookingScheduleScreen() {
     router.push({
       pathname: '/booking/payment',
       params: {
-        serviceId: String(service?.id ?? ''),
+        registrationId: String(registration?.id ?? ''),
         providerId: String(provider?.id ?? ''),
         providerName,
         categoryName: roleName,
-        price: service?.price ?? '0',
+        price: registration?.gaji_diharapkan ?? '0',
         workDate: `${calYear}-${pad(calMonth + 1)}-${pad(selectedStart!)}`,
         startTime: `${pad(startTime.hour)}:${pad(startTime.minute)}`,
-        location: '',
+        location: location.trim(),
       },
     });
   };
@@ -389,17 +425,20 @@ export default function BookingScheduleScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fff' }}>
+    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Blue Header ── */}
-      <View style={{ backgroundColor: BLUE, paddingTop: Platform.OS === 'ios' ? 56 : 40, paddingBottom: 24, paddingHorizontal: 20 }}>
-        <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 8 }}>
-          <Ionicons name="chevron-back" size={20} color="#fff" />
-          <Text style={{ color: '#fff', fontSize: 14 }}>Kembali</Text>
+      <View style={{ backgroundColor: BLUE, paddingTop: insets.top + 12, paddingBottom: 28, paddingHorizontal: 22, borderBottomLeftRadius: 26, borderBottomRightRadius: 26 }}>
+        <Pressable onPress={() => router.back()} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, alignSelf: 'flex-start', marginBottom: 12, minHeight: 30 }}>
+          <Ionicons name="chevron-back" size={24} color="#FFFFFF" />
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: FontWeight.medium }}>Kembali</Text>
         </Pressable>
-        <Text style={{ color: '#fff', fontSize: 22, fontWeight: FontWeight.bold, textAlign: 'center' }}>
-          Jadwalkan Sekarang!
+        <Text style={{ color: '#FFFFFF', fontSize: 25, fontWeight: FontWeight.bold, textAlign: 'center' }}>
+          Atur jadwal kerja
+        </Text>
+        <Text style={{ color: '#E8EEFF', fontSize: 13, textAlign: 'center', marginTop: 7, lineHeight: 19 }}>
+          Pilih tanggal, waktu, dan lokasi pekerjaan.
         </Text>
       </View>
 
@@ -408,16 +447,35 @@ export default function BookingScheduleScreen() {
         contentContainerStyle={{ paddingBottom: 120 }}
       >
         {/* ── Provider Card ── */}
-        <View style={{ margin: 16, backgroundColor: '#FFF9E6', borderRadius: 16, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <View style={{
+          margin: 16,
+          marginTop: -14,
+          backgroundColor: SURFACE,
+          borderRadius: 24,
+          padding: 16,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 14,
+          borderWidth: 1,
+          borderColor: BORDER,
+          shadowColor: BLUE,
+          shadowOpacity: 0.1,
+          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 10 },
+          elevation: 5,
+        }}>
           <Avatar name={providerName} size={56} />
-          <View>
-            <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: '#111' }}>{providerName}</Text>
-            <Text style={{ fontSize: 13, color: Colors.grayMed }}>{roleName}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 18, fontWeight: FontWeight.bold, color: TEXT }} numberOfLines={1}>{providerName}</Text>
+            <Text style={{ fontSize: 13, color: MUTED, marginTop: 2 }}>{roleName}</Text>
+            <Text style={{ fontSize: 14, color: BLUE, fontWeight: FontWeight.bold, marginTop: 5 }}>
+              Rp {parseInt(registration?.gaji_diharapkan || '0', 10).toLocaleString('id-ID')}
+            </Text>
           </View>
         </View>
 
         {/* ── Calendar Card ── */}
-        <View style={{ marginHorizontal: 16, backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E5E7EB', padding: 16 }}>
+        <View style={{ marginHorizontal: 16, backgroundColor: SURFACE, borderRadius: 24, borderWidth: 1, borderColor: BORDER, padding: 16 }}>
           {/* Month navigation */}
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <Pressable onPress={prevMonth} hitSlop={8}>
@@ -467,7 +525,7 @@ export default function BookingScheduleScreen() {
               {/* Start row */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 36 }}>
-                  <Text style={{ fontSize: 11, color: Colors.grayMed }}>Dari</Text>
+                  <Text style={{ fontSize: 11, color: Colors.grayMed }}>From</Text>
                   <Text style={{ fontSize: 22, fontWeight: FontWeight.bold, color: '#111' }}>{selectedStart}</Text>
                 </View>
                 <View>
@@ -491,7 +549,7 @@ export default function BookingScheduleScreen() {
               {/* End row */}
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <View style={{ width: 36 }}>
-                  <Text style={{ fontSize: 11, color: Colors.grayMed }}>Sampai</Text>
+                  <Text style={{ fontSize: 11, color: Colors.grayMed }}>To</Text>
                   <Text style={{ fontSize: 22, fontWeight: FontWeight.bold, color: '#111' }}>{selectedEnd ?? '—'}</Text>
                 </View>
                 <View>
@@ -516,7 +574,7 @@ export default function BookingScheduleScreen() {
             /* Single day time row */
             <View style={{ marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={{ width: 36 }}>
-                <Text style={{ fontSize: 11, color: Colors.grayMed }}>Dari</Text>
+                <Text style={{ fontSize: 11, color: Colors.grayMed }}>Pada</Text>
                 <Text style={{ fontSize: 22, fontWeight: FontWeight.bold, color: '#111' }}>{selectedStart}</Text>
               </View>
               <View>
@@ -538,6 +596,32 @@ export default function BookingScheduleScreen() {
             </View>
           ) : null}
         </View>
+
+        <View style={{ marginHorizontal: 16, marginTop: 14, backgroundColor: SURFACE, borderRadius: 24, borderWidth: 1, borderColor: BORDER, padding: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <View style={{ width: 38, height: 38, borderRadius: 15, backgroundColor: BLUE_LIGHT, alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="location-outline" size={20} color={BLUE} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: TEXT, fontSize: 17, fontWeight: FontWeight.bold }}>Lokasi pekerjaan</Text>
+              <Text style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>Isi alamat tempat pekerjaan dilakukan.</Text>
+            </View>
+          </View>
+          <View style={{ minHeight: 96, borderRadius: 18, backgroundColor: '#F8FAFF', borderWidth: 1, borderColor: BORDER, paddingHorizontal: 14, paddingVertical: 10 }}>
+            <TextInput
+              value={location}
+              onChangeText={setLocation}
+              placeholder="Contoh: Jl. Melati No. 12, Jakarta Selatan"
+              placeholderTextColor="#A5AEC3"
+              multiline
+              textAlignVertical="top"
+              style={{ color: TEXT, fontSize: 14, lineHeight: 20, minHeight: 72 }}
+            />
+          </View>
+          {!location.trim() ? (
+            <Text style={{ color: MUTED, fontSize: 12, marginTop: 8 }}>Lokasi wajib diisi sebelum lanjut ke pembayaran.</Text>
+          ) : null}
+        </View>
       </ScrollView>
 
       {/* ── Bottom CTA ── */}
@@ -546,20 +630,28 @@ export default function BookingScheduleScreen() {
         paddingHorizontal: 20,
         paddingTop: 12,
         paddingBottom: Platform.OS === 'ios' ? 36 : 20,
-        backgroundColor: '#fff',
-        borderTopWidth: 1, borderTopColor: '#F0F0F0',
+        backgroundColor: SURFACE,
+        borderTopWidth: 1, borderTopColor: BORDER,
+        shadowColor: BLUE,
+        shadowOpacity: 0.08,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: -8 },
+        elevation: 8,
       }}>
         <Pressable
           onPress={handleSelanjutnya}
+          disabled={!canProceed}
           style={({ pressed }) => ({
-            backgroundColor: GOLD,
+            backgroundColor: canProceed ? GOLD : '#E5E7EB',
             borderRadius: 40,
             paddingVertical: 16,
             alignItems: 'center',
             opacity: pressed ? 0.85 : 1,
+            borderWidth: 1,
+            borderColor: canProceed ? GOLD_DARK : '#D1D5DB',
           })}
         >
-          <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: '#111' }}>Selanjutnya →</Text>
+          <Text style={{ fontSize: 17, fontWeight: FontWeight.bold, color: canProceed ? TEXT : MUTED }}>Selanjutnya</Text>
         </Pressable>
       </View>
 

@@ -29,18 +29,18 @@ class BookingSerializer(serializers.ModelSerializer):
 
     client_email = serializers.CharField(source='client.email', read_only=True)
     provider_name = serializers.SerializerMethodField()
-    service_title = serializers.CharField(source='service.title', read_only=True)
+    category_name = serializers.CharField(source='registration.category.name', read_only=True)
 
     class Meta:
         model = Booking
         fields = [
             'id', 'client', 'client_email', 'provider', 'provider_name',
-            'service', 'service_title', 'availability',
+            'registration', 'category_name', 'availability',
             'status', 'notes', 'created_at', 'updated_at',
         ]
         read_only_fields = [
             'id', 'client', 'client_email', 'provider_name',
-            'service_title', 'created_at', 'updated_at',
+            'category_name', 'created_at', 'updated_at',
         ]
 
     def get_provider_name(self, obj):
@@ -54,11 +54,10 @@ class BookingCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['service', 'availability', 'notes']
+        fields = ['registration', 'availability', 'notes']
 
-    def validate_service(self, value):
-        if not value.is_active:
-            raise serializers.ValidationError("This service is not currently active.")
+    def validate_registration(self, value):
+        # We can add active check here if registration has an is_active field
         return value
 
 

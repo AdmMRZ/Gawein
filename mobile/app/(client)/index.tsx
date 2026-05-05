@@ -44,25 +44,28 @@ export default function HomeScreen() {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    Promise.all([
-      providerService.list(), 
-      categoryService.list(), 
-      // Fetch major cities from regional API for initial filter options
-      // 3171: Jakarta Pusat, 3273: Bandung, 3578: Surabaya, 5171: Denpasar, 3374: Semarang
-      Promise.all([
-        fetch('https://api-regional-indonesia.vercel.app/api/city/3171').then(r => r.json()),
-        fetch('https://api-regional-indonesia.vercel.app/api/city/3273').then(r => r.json()),
-        fetch('https://api-regional-indonesia.vercel.app/api/city/3578').then(r => r.json()),
-        fetch('https://api-regional-indonesia.vercel.app/api/city/5171').then(r => r.json()),
-        fetch('https://api-regional-indonesia.vercel.app/api/city/3374').then(r => r.json()),
-      ]).then(results => results.map(r => r.data))
-    ])
-      .then(([providerRes, categoryRes, citiesRes]) => {
-        setProviders(providerRes);
-        setCategories(categoryRes);
-        setCities(citiesRes);
+    // Load providers & categories — critical, must not be blocked by city API
+    Promise.all([providerService.list(), categoryService.list()])
+      .then(([providerRes, categoryRes]) => {
+        setProviders(Array.isArray(providerRes) ? providerRes : []);
+        setCategories(Array.isArray(categoryRes) ? categoryRes : []);
       })
-      .catch(() => setCategories([]));
+      .catch((err) => {
+        console.error('Failed to load providers/categories:', err);
+        setProviders([]);
+        setCategories([]);
+      });
+
+    // Load cities independently — failure here should NOT block main content
+    Promise.all([
+      fetch('https://api-regional-indonesia.vercel.app/api/city/3171').then(r => r.json()),
+      fetch('https://api-regional-indonesia.vercel.app/api/city/3273').then(r => r.json()),
+      fetch('https://api-regional-indonesia.vercel.app/api/city/3578').then(r => r.json()),
+      fetch('https://api-regional-indonesia.vercel.app/api/city/5171').then(r => r.json()),
+      fetch('https://api-regional-indonesia.vercel.app/api/city/3374').then(r => r.json()),
+    ])
+      .then(results => setCities(results.map(r => r.data).filter(Boolean)))
+      .catch(() => setCities([]));
   }, []);
 
   const displayCategories = categories;
@@ -73,24 +76,24 @@ export default function HomeScreen() {
   const filteredProviders = useMemo(() => {
     const keyword = normalize(query);
     const list = providerSource.filter((provider) => {
-      const firstService = provider.services?.[0];
+      const firstReg = provider.registrations?.[0];
       const searchable = [
         provider.user.first_name,
         provider.user.last_name,
         provider.bio,
-        provider.gender,
-        provider.location,
-        firstService?.title,
-        firstService?.category_name,
+        provider.user?.gender,
+        provider.kota_name,
+        provider.provinsi_name,
+        firstReg?.category_name,
       ].filter(Boolean).join(' ').toLowerCase();
       const byKeyword = keyword ? normalize(searchable).includes(keyword) : true;
       const selectedName = selectedCategory?.name;
       const byCategory = selectedName
-        ? provider.services?.some((service) => normalize(service.category_name || '').includes(normalize(selectedName)))
+        ? provider.registrations?.some((reg) => normalize(reg.category_name || '').includes(normalize(selectedName)))
         : true;
-      const price = Number.parseInt(firstService?.price || '0', 10);
+      const price = Number.parseFloat(firstReg?.gaji_diharapkan || '0');
       const byPrice = price >= priceRange[0] && price <= priceRange[1];
-      const byGender = gender ? genderMatches(provider.gender || '', gender) : true;
+      const byGender = gender ? genderMatches(provider.user?.gender || '', gender) : true;
       const byAge = (!minAge || (provider.age || 0) >= Number(minAge)) && (!maxAge || (provider.age || 0) <= Number(maxAge));
       const byExperience = experience === '<5'
         ? provider.years_of_experience < 5
@@ -99,7 +102,7 @@ export default function HomeScreen() {
           : experience === '>10'
             ? provider.years_of_experience > 10
             : true;
-      const byLocation = location ? (provider as any).kota_id === location : true;
+      const byLocation = location ? provider.kota_id === location : true;
       return byKeyword && byCategory && byPrice && byGender && byAge && byExperience && byLocation;
     });
 
@@ -189,15 +192,9 @@ export default function HomeScreen() {
 
         <Text style={styles.sectionLabel}>Usia</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-<<<<<<< HEAD
           <SmallInput placeholder="" value={minAge} onChangeText={setMinAge} keyboardType="number-pad" />
           <Text style={{ fontWeight: '800', color: TEXT }}>s.d.</Text>
           <SmallInput placeholder="" value={maxAge} onChangeText={setMaxAge} keyboardType="number-pad" />
-=======
-          <SmallInput placeholder="Masukkan Usia" value={minAge} onChangeText={setMinAge} keyboardType="number-pad" />
-          <Text style={{ fontWeight: '800', color: TEXT }}>s.d.</Text>
-          <SmallInput placeholder="Masukkan Usia" value={maxAge} onChangeText={setMaxAge} keyboardType="number-pad" />
->>>>>>> e851359ffddcdda7c14f34115abcd0f7599c2413
           <Text style={{ color: TEXT }}>tahun</Text>
         </View>
 
@@ -467,7 +464,7 @@ function ProviderList({
 }
 
 function ProviderRow({ provider, index }: { provider: ProviderProfile; index: number }) {
-  const service = provider.services?.[0];
+  const reg = provider.registrations?.[0];
   const rating = Number.parseFloat(provider.rating_average || '0') || 4.5;
   const fullName = `${provider.user.first_name} ${provider.user.last_name}`.trim() || 'Pekerja GaweIn';
   return (
@@ -481,11 +478,11 @@ function ProviderRow({ provider, index }: { provider: ProviderProfile; index: nu
           </View>
         </View>
         <View style={{ flex: 1, padding: 12 }}>
-          <Text style={{ color: MUTED, fontSize: 11 }}>{service?.title || service?.category_name || 'Pekerja Profesional'}</Text>
+          <Text style={{ color: MUTED, fontSize: 11 }}>{reg?.category_name || 'Pekerja Profesional'}</Text>
           <Text style={{ color: BLUE, fontSize: 17, fontWeight: '900' }} numberOfLines={1}>{fullName}</Text>
-          <Text style={{ color: MUTED, fontSize: 10 }}>{provider.years_of_experience || 1} tahun pengalaman</Text>
+          <Text style={{ color: MUTED, fontSize: 10 }}>{provider.years_of_experience || 1} tahun pengalaman • {provider.kota_name || 'Lokasi tidak ada'}</Text>
           <View style={{ backgroundColor: YELLOW, borderRadius: 5, paddingHorizontal: 14, paddingVertical: 6, alignSelf: 'flex-start', marginTop: 8 }}>
-            <Text style={{ color: TEXT, fontWeight: '900', fontSize: 12 }}>{formatPrice(service?.price)}</Text>
+            <Text style={{ color: TEXT, fontWeight: '900', fontSize: 12 }}>{formatPrice(reg?.gaji_diharapkan)}</Text>
           </View>
         </View>
       </Pressable>
@@ -494,13 +491,13 @@ function ProviderRow({ provider, index }: { provider: ProviderProfile; index: nu
 }
 
 function RecommendationCard({ provider, index }: { provider: ProviderProfile; index: number }) {
-  const service = provider.services?.[0];
+  const reg = provider.registrations?.[0];
   const fullName = `${provider.user.first_name} ${provider.user.last_name}`.trim() || 'Pekerja GaweIn';
   const rating = Number.parseFloat(provider.rating_average || '0') || 4.5;
   return (
     <Link href={`/provider/${provider.id}`} asChild>
       <Pressable style={{ width: 155, borderRadius: 14, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF', padding: 8 }}>
-        <Text style={{ fontSize: 11, color: MUTED, marginBottom: 6 }} numberOfLines={1}>{service?.title || 'Pekerja Profesional'}</Text>
+        <Text style={{ fontSize: 11, color: MUTED, marginBottom: 6 }} numberOfLines={1}>{reg?.category_name || 'Pekerja Profesional'}</Text>
         <View style={{ width: '100%', height: 120, borderRadius: 10, backgroundColor: '#F0F0F0', alignItems: 'center', justifyContent: 'center' }}>
           <Ionicons name="person" size={80} color="#CCCCCC" />
         </View>
@@ -509,9 +506,9 @@ function RecommendationCard({ provider, index }: { provider: ProviderProfile; in
           <Ionicons name="star" size={11} color={YELLOW} />
           <Text style={{ fontSize: 11, color: TEXT, fontWeight: '700' }}>{rating.toFixed(1)}</Text>
         </View>
-        <Text style={{ color: MUTED, fontSize: 10 }}>{provider.years_of_experience || 1} tahun pengalaman</Text>
+        <Text style={{ color: MUTED, fontSize: 10 }}>{provider.years_of_experience || 1} thn • {provider.kota_name || 'N/A'}</Text>
         <View style={{ backgroundColor: YELLOW, borderRadius: 5, paddingHorizontal: 9, paddingVertical: 5, alignSelf: 'flex-start', marginTop: 6 }}>
-          <Text style={{ color: TEXT, fontWeight: '900', fontSize: 11 }}>{formatPrice(service?.price)}</Text>
+          <Text style={{ color: TEXT, fontWeight: '900', fontSize: 11 }}>{formatPrice(reg?.gaji_diharapkan)}</Text>
         </View>
       </Pressable>
     </Link>
@@ -573,7 +570,7 @@ const styles = {
 };
 
 function sortValue(provider: ProviderProfile, sortBy: Exclude<SortFilter, null>) {
-  if (sortBy === 'price') return Number.parseInt(provider.services?.[0]?.price || '0', 10);
+  if (sortBy === 'price') return Number.parseFloat(provider.registrations?.[0]?.gaji_diharapkan || '0');
   if (sortBy === 'rating') return Number.parseFloat(provider.rating_average || '0');
   return provider.years_of_experience || 0;
 }

@@ -9,6 +9,7 @@ export interface User {
   first_name: string;
   last_name: string;
   gender?: string;
+  phone?: string;
   role: UserRole;
   is_active: boolean;
   is_verified: boolean;
@@ -28,9 +29,6 @@ export interface AuthResponse {
 
 export interface ClientProfile {
   id: number;
-  phone: string;
-  city: string;
-  city_id: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -39,16 +37,16 @@ export interface ProviderProfile {
   id: number;
   user: User;
   bio: string;
-  gender: string;
   age: number | null;
-  city: string;
-  city_id: number | null;
   years_of_experience: number;
   is_verified: boolean;
   verification_status: 'pending' | 'verified' | 'rejected';
   rating_average: string;
   total_reviews: number;
-  services: Service[];
+  kota_id: string | null;
+  kota_name: string | null;
+  provinsi_name: string | null;
+  registrations: ProviderRegistration[];
   created_at: string;
   updated_at: string;
 }
@@ -61,15 +59,15 @@ export interface ProfileResponse {
 export interface ProviderProfileData {
   id: number;
   bio: string;
-  gender: string;
   age: number | null;
-  city: string;
-  city_id: number | null;
   years_of_experience: number;
   is_verified: boolean;
   verification_status: string;
   rating_average: string;
   total_reviews: number;
+  kota_id: string | null;
+  kota_name: string | null;
+  provinsi_name: string | null;
 }
 
 // ── Category ───────────────────────────────────────────────
@@ -84,37 +82,19 @@ export interface Category {
   updated_at: string;
 }
 
-// ── Service ────────────────────────────────────────────────
-
-export interface Service {
+export interface ProviderRegistration {
   id: number;
-  provider: number;
   category: number | null;
   category_name: string | null;
-  category_icon?: string | null;
-  provider_name: string;
-  title: string;
-  description: string;
-  price: string;
-  city: string;
-  city_id: number | null;
-  service_scope: string;
-  service_limitations: string;
-  is_active: boolean;
+  provinsi_id: string;
+  kota_id: string;
+  provinsi_name: string;
+  kota_name: string;
+  pengalaman: string;
+  tahun_pengalaman: number;
+  gaji_diharapkan: string;
   created_at: string;
   updated_at: string;
-}
-
-export interface ServiceCreateData {
-  category?: number;
-  title: string;
-  description: string;
-  price: number;
-  city: string;
-  city_id: number | null;
-  service_scope?: string;
-  service_limitations?: string;
-  is_active?: boolean;
 }
 
 // ── Availability ───────────────────────────────────────────
@@ -140,8 +120,8 @@ export interface Booking {
   client_email: string;
   provider: number;
   provider_name: string;
-  service: number;
-  service_title: string;
+  registration: number;
+  category_name: string;
   availability: number | null;
   status: BookingStatus;
   notes: string;
@@ -160,14 +140,12 @@ export interface Hiring {
   client_name: string;
   provider: number;
   provider_name: string;
-  service: number;
-  service_title: string;
+  registration: number;
   category_name: string | null;
   booking: number | null;
   agreed_price: string;
   work_date: string;
-  city: string;
-  city_id: number | null;
+  location: string;
   notes: string;
   status: HiringStatus;
   has_review: boolean;
@@ -195,7 +173,8 @@ export interface Review {
 export interface SearchParams {
   keyword?: string;
   category?: number;
-  location?: string;
+  kota_id?: string;
+  provinsi_id?: string;
   min_price?: number;
   max_price?: number;
   gender?: string;

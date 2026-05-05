@@ -15,6 +15,16 @@ import { hiringService } from '@/services/hiring';
 import { ApiError, generateIdempotencyKey } from '@/services/api';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '@/constants/theme';
 
+const BLUE = Colors.navy;
+const BLUE_SOFT = '#EEF3FF';
+const YELLOW = Colors.gold;
+const YELLOW_DARK = '#E5B82F';
+const SURFACE = '#FFFFFF';
+const PAGE_BG = '#F8FAFF';
+const BORDER = '#E4EAFF';
+const TEXT = '#111111';
+const MUTED = '#6E7480';
+
 // ── Format Rupiah ──────────────────────────────────────────
 const formatRupiah = (value: string | number) => {
   const num = typeof value === 'number' ? value : parseInt(String(value).replace(/\D/g, ''), 10);
@@ -46,19 +56,24 @@ function PaymentOption({
       onPress={() => onSelect(value)}
       style={({ pressed }) => ({
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: selected ? 'rgba(99,102,241,0.08)' : Colors.slate900,
-        borderRadius: Radius.xl,
-        borderWidth: 1.5,
-        borderColor: selected ? Colors.primary : Colors.grayLight,
-        padding: Spacing.md,
+        backgroundColor: selected ? BLUE_SOFT : SURFACE,
+        borderRadius: 18,
+        borderWidth: selected ? 2 : 1,
+        borderColor: selected ? BLUE : BORDER,
+        padding: 14,
         gap: Spacing.md,
-        marginBottom: Spacing.sm,
-        opacity: pressed ? 0.8 : 1,
+        marginBottom: 10,
+        opacity: pressed ? 0.88 : 1,
+        shadowColor: selected ? BLUE : 'transparent',
+        shadowOpacity: selected ? 0.09 : 0,
+        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 7 },
+        elevation: selected ? 3 : 0,
       })}
     >
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
         {icons}
-        <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.medium, color: Colors.textPrimary }}>
+        <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: TEXT }}>
           {label}
         </Text>
       </View>
@@ -66,11 +81,12 @@ function PaymentOption({
       <View style={{
         width: 22, height: 22, borderRadius: 11,
         borderWidth: 2,
-        borderColor: selected ? Colors.primary : Colors.grayMed,
+        borderColor: selected ? BLUE : '#B8C3DD',
         justifyContent: 'center', alignItems: 'center',
+        backgroundColor: SURFACE,
       }}>
         {selected && (
-          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary }} />
+          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: BLUE }} />
         )}
       </View>
     </Pressable>
@@ -102,7 +118,7 @@ function TransactionRow({ label, amount, bold = false }: { label: string; amount
 // ── Main Screen ────────────────────────────────────────────
 export default function PaymentScreen() {
   const params = useLocalSearchParams<{
-    serviceId: string;
+    registrationId: string;
     providerId: string;
     providerName: string;
     categoryName: string;
@@ -130,9 +146,9 @@ export default function PaymentScreen() {
     const sessionKey = generateIdempotencyKey();
 
     try {
-      // Step 1: Create booking (links service)
+      // Step 1: Create booking (links registration)
       const booking = await schedulingService.createBooking(
-        { service: Number(params.serviceId) },
+        { registration: Number(params.registrationId) },
         { idempotencyKey: `bk-${sessionKey}` }
       );
 
@@ -170,13 +186,13 @@ export default function PaymentScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.cream }}>
+    <View style={{ flex: 1, backgroundColor: PAGE_BG }}>
       <Stack.Screen
         options={{
           title: 'Pembayaran',
           headerShown: true,
-          headerStyle: { backgroundColor: Colors.cream },
-          headerTintColor: Colors.textPrimary,
+          headerStyle: { backgroundColor: PAGE_BG },
+          headerTintColor: TEXT,
           headerShadowVisible: false,
           headerBackButtonDisplayMode: 'minimal',
         }}
@@ -184,28 +200,33 @@ export default function PaymentScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: Spacing.xl, paddingBottom: 140, gap: Spacing.md }}
+        contentContainerStyle={{ padding: 22, paddingBottom: 140, gap: 16 }}
       >
         {/* ── Provider Summary ── */}
         <View style={{
-          backgroundColor: Colors.slate900,
-          borderRadius: Radius.xl,
-          padding: Spacing.md,
-          borderWidth: 1, borderColor: Colors.grayLight,
-          gap: Spacing.sm,
+          backgroundColor: SURFACE,
+          borderRadius: 24,
+          padding: 16,
+          borderWidth: 1, borderColor: BORDER,
+          gap: 12,
+          shadowColor: BLUE,
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: 10 },
+          elevation: 4,
         }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <View style={{ width: 50, height: 50, borderRadius: 12, backgroundColor: Colors.primary + '20', justifyContent: 'center', alignItems: 'center' }}>
-              <Ionicons name="person" size={24} color={Colors.primary} />
+            <View style={{ width: 54, height: 54, borderRadius: 18, backgroundColor: BLUE_SOFT, justifyContent: 'center', alignItems: 'center' }}>
+              <Ionicons name="person" size={25} color={BLUE} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: FontSize.xs, color: Colors.textMuted }}>{params.categoryName}</Text>
-              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary }}>{params.providerName}</Text>
-              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.primary }}>{formatRupiah(servicePrice)}</Text>
+              <Text style={{ fontSize: FontSize.xs, color: MUTED, fontWeight: FontWeight.semibold }}>{params.categoryName}</Text>
+              <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: TEXT }} numberOfLines={1}>{params.providerName}</Text>
+              <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: BLUE }}>{formatRupiah(servicePrice)}</Text>
             </View>
           </View>
 
-          <View style={{ height: 1, backgroundColor: Colors.grayLight }} />
+          <View style={{ height: 1, backgroundColor: '#EDF1FF' }} />
 
           {/* Date, Time, Location rows */}
           {[
@@ -215,10 +236,10 @@ export default function PaymentScreen() {
           ].map(({ icon, label, value }) => (
             <View key={label} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Ionicons name={icon as any} size={16} color={Colors.textMuted} />
-                <Text style={{ fontSize: FontSize.sm, color: Colors.textMuted }}>{label}</Text>
+                <Ionicons name={icon as any} size={16} color={MUTED} />
+                <Text style={{ fontSize: FontSize.sm, color: MUTED, fontWeight: FontWeight.medium }}>{label}</Text>
               </View>
-              <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: Colors.textPrimary, maxWidth: '55%', textAlign: 'right' }} numberOfLines={1}>
+              <Text style={{ fontSize: FontSize.sm, fontWeight: FontWeight.semibold, color: TEXT, maxWidth: '55%', textAlign: 'right' }} numberOfLines={1}>
                 {value}
               </Text>
             </View>
@@ -226,10 +247,15 @@ export default function PaymentScreen() {
         </View>
 
         {/* ── Payment Methods ── */}
-        <View style={{ backgroundColor: Colors.slate900, borderRadius: Radius.xl, padding: Spacing.md, borderWidth: 1, borderColor: Colors.grayLight }}>
-          <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.md }}>
-            Metode Pembayaran
-          </Text>
+        <View style={{ backgroundColor: SURFACE, borderRadius: 24, padding: 16, borderWidth: 1, borderColor: BORDER }}>
+          <View style={{ marginBottom: 14 }}>
+            <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: TEXT }}>
+              Metode pembayaran
+            </Text>
+            <Text style={{ fontSize: FontSize.sm, color: MUTED, marginTop: 3 }}>
+              Pilih metode untuk menyelesaikan rekrut.
+            </Text>
+          </View>
 
           <PaymentOption
             selected={paymentMethod === 'card'}
@@ -239,11 +265,11 @@ export default function PaymentScreen() {
             icons={
               <View style={{ flexDirection: 'row', gap: 4 }}>
                 {/* Mastercard */}
-                <View style={{ width: 28, height: 18, borderRadius: 4, backgroundColor: '#EB001B', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
+                <View style={{ width: 34, height: 22, borderRadius: 7, backgroundColor: '#EB001B', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
                   <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: '#FF5F00', position: 'absolute', left: 8 }} />
                 </View>
                 {/* Visa */}
-                <View style={{ width: 28, height: 18, borderRadius: 4, backgroundColor: '#1A1F71', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 34, height: 22, borderRadius: 7, backgroundColor: '#1A1F71', justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ fontSize: 7, fontWeight: FontWeight.bold, color: '#fff', fontStyle: 'italic' }}>VISA</Text>
                 </View>
               </View>
@@ -258,15 +284,15 @@ export default function PaymentScreen() {
             icons={
               <View style={{ flexDirection: 'row', gap: 4 }}>
                 {/* OVO */}
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#4B2FBF', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#4B2FBF', justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ fontSize: 6, fontWeight: FontWeight.bold, color: '#fff' }}>OVO</Text>
                 </View>
                 {/* GoPay */}
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#00AA13', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#00AA13', justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ fontSize: 5, fontWeight: FontWeight.bold, color: '#fff' }}>Go</Text>
                 </View>
                 {/* ShopeePay */}
-                <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: '#EE4D2D', justifyContent: 'center', alignItems: 'center' }}>
+                <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: '#EE4D2D', justifyContent: 'center', alignItems: 'center' }}>
                   <Text style={{ fontSize: 5, fontWeight: FontWeight.bold, color: '#fff' }}>SPay</Text>
                 </View>
               </View>
@@ -275,8 +301,8 @@ export default function PaymentScreen() {
         </View>
 
         {/* ── Transaction Detail ── */}
-        <View style={{ backgroundColor: Colors.slate900, borderRadius: Radius.xl, padding: Spacing.md, borderWidth: 1, borderColor: Colors.grayLight }}>
-          <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: Colors.textPrimary, marginBottom: Spacing.md }}>
+        <View style={{ backgroundColor: SURFACE, borderRadius: 24, padding: 16, borderWidth: 1, borderColor: BORDER }}>
+          <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: TEXT, marginBottom: Spacing.md }}>
             Detail Transaksi
           </Text>
 
@@ -284,14 +310,14 @@ export default function PaymentScreen() {
           <TransactionRow label="Biaya Transportasi" amount={TRANSPORT_FEE} />
           <TransactionRow label="Biaya Platform" amount={PLATFORM_FEE} />
 
-          <View style={{ height: 1, backgroundColor: Colors.grayLight, marginVertical: Spacing.sm }} />
+          <View style={{ height: 1, backgroundColor: '#EDF1FF', marginVertical: Spacing.sm }} />
 
           <TransactionRow label="Total" amount={total} bold />
         </View>
 
         {/* ── Error ── */}
         {error ? (
-          <View style={{ backgroundColor: Colors.errorSoft, padding: Spacing.md, borderRadius: Radius.lg }}>
+          <View style={{ backgroundColor: '#FEECEC', padding: Spacing.md, borderRadius: Radius.lg }}>
             <Text style={{ fontSize: FontSize.sm, color: Colors.error }}>{error}</Text>
           </View>
         ) : null}
@@ -300,27 +326,39 @@ export default function PaymentScreen() {
       {/* ── Fixed Bottom CTA ── */}
       <View style={{
         position: 'absolute', bottom: 0, left: 0, right: 0,
-        backgroundColor: Colors.cream,
+        backgroundColor: SURFACE,
         paddingHorizontal: Spacing.xl,
         paddingTop: Spacing.md,
         paddingBottom: Platform.OS === 'ios' ? 36 : Spacing.xl,
-        borderTopWidth: 1, borderTopColor: Colors.grayLight,
+        borderTopWidth: 1, borderTopColor: BORDER,
+        shadowColor: BLUE,
+        shadowOpacity: 0.08,
+        shadowRadius: 18,
+        shadowOffset: { width: 0, height: -8 },
+        elevation: 8,
       }}>
         <Pressable
           onPress={() => setShowConfirmModal(true)}
           disabled={loading}
           style={({ pressed }) => ({
-            backgroundColor: Colors.warning,
-            borderRadius: Radius.xl,
+            backgroundColor: YELLOW,
+            borderRadius: 22,
             paddingVertical: 16,
             alignItems: 'center',
             opacity: pressed || loading ? 0.85 : 1,
+            borderWidth: 1,
+            borderColor: YELLOW_DARK,
+            shadowColor: YELLOW_DARK,
+            shadowOpacity: 0.22,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: 8 },
+            elevation: 4,
           })}
         >
           {loading ? (
-            <ActivityIndicator size="small" color="#1a1a1a" />
+            <ActivityIndicator size="small" color={TEXT} />
           ) : (
-            <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#1a1a1a' }}>
+            <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: TEXT }}>
               Rekrut
             </Text>
           )}
@@ -330,48 +368,66 @@ export default function PaymentScreen() {
       {/* ── Confirmation Modal ── */}
       <Modal visible={showConfirmModal} transparent animationType="fade">
         <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: Spacing.xl }}
+          style={{ flex: 1, backgroundColor: 'rgba(17,24,39,0.56)', justifyContent: 'center', alignItems: 'center', padding: Spacing.xl }}
           onPress={() => setShowConfirmModal(false)}
         >
           <Pressable
             onPress={(e) => e.stopPropagation()}
             style={{
-              backgroundColor: Colors.slate900,
-              borderRadius: Radius.xl,
-              padding: Spacing.xl,
+              backgroundColor: SURFACE,
+              borderRadius: 28,
+              padding: 22,
               width: '100%',
-              gap: Spacing.md,
+              gap: 14,
+              borderWidth: 1,
+              borderColor: BORDER,
+              shadowColor: '#0F172A',
+              shadowOpacity: 0.18,
+              shadowRadius: 28,
+              shadowOffset: { width: 0, height: 16 },
+              elevation: 10,
             }}
           >
-            <Text style={{ fontSize: FontSize.lg, fontWeight: FontWeight.bold, color: Colors.textPrimary, textAlign: 'center' }}>
-              Apakah kamu yakin ingin merekrut?
+            <View style={{ alignItems: 'center', gap: 12 }}>
+              <View style={{ width: 58, height: 58, borderRadius: 20, backgroundColor: BLUE_SOFT, alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="shield-checkmark-outline" size={30} color={BLUE} />
+              </View>
+              <Text style={{ fontSize: FontSize.xl, fontWeight: FontWeight.bold, color: TEXT, textAlign: 'center' }}>
+                Konfirmasi rekrut
+              </Text>
+            </View>
+            <Text style={{ fontSize: FontSize.sm, color: MUTED, textAlign: 'center', lineHeight: 21 }}>
+              Pastikan jadwal, lokasi, dan metode pembayaran sudah benar sebelum melanjutkan.
             </Text>
-            <Text style={{ fontSize: FontSize.sm, color: Colors.textSecondary, textAlign: 'center', lineHeight: 20 }}>
-              Pastikan metode pembayaran sudah benar sebelum melanjutkan proses
-            </Text>
+            <View style={{ backgroundColor: BLUE_SOFT, borderRadius: 18, padding: 14, gap: 8 }}>
+              <TransactionRow label="Total pembayaran" amount={total} bold />
+            </View>
 
             <View style={{ flexDirection: 'row', gap: Spacing.md, marginTop: Spacing.sm }}>
               <Pressable
                 onPress={() => setShowConfirmModal(false)}
                 style={({ pressed }) => ({
-                  flex: 1, paddingVertical: 14, borderRadius: Radius.lg,
-                  borderWidth: 1.5, borderColor: Colors.grayMed,
+                  flex: 1, paddingVertical: 14, borderRadius: 18,
+                  borderWidth: 1.5, borderColor: BORDER,
+                  backgroundColor: SURFACE,
                   alignItems: 'center', opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: Colors.textMuted }}>
+                <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.semibold, color: MUTED }}>
                   Batalkan
                 </Text>
               </Pressable>
               <Pressable
                 onPress={handleSubmit}
                 style={({ pressed }) => ({
-                  flex: 1, paddingVertical: 14, borderRadius: Radius.lg,
-                  backgroundColor: Colors.warning,
+                  flex: 1, paddingVertical: 14, borderRadius: 18,
+                  backgroundColor: YELLOW,
+                  borderWidth: 1,
+                  borderColor: YELLOW_DARK,
                   alignItems: 'center', opacity: pressed ? 0.85 : 1,
                 })}
               >
-                <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: '#1a1a1a' }}>
+                <Text style={{ fontSize: FontSize.md, fontWeight: FontWeight.bold, color: TEXT }}>
                   Rekrut
                 </Text>
               </Pressable>

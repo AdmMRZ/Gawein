@@ -17,7 +17,7 @@ class TransactionRepository:
             .select_related(
                 'client',
                 'provider__user',
-                'service__category',
+                'registration__category',
                 'booking',
             )
             .filter(pk=hiring_id)
@@ -32,7 +32,7 @@ class TransactionRepository:
             .select_related(
                 'client',
                 'provider__user',
-                'service__category',
+                'registration__category',
                 'booking',
             )
             .filter(
@@ -44,7 +44,7 @@ class TransactionRepository:
     def list_hirings_by_client(client: User) -> QuerySet:
         return (
             HiringTransaction.objects
-            .select_related('provider__user', 'service__category', 'booking')
+            .select_related('provider__user', 'registration__category', 'booking')
             .filter(client=client)
         )
 
@@ -52,7 +52,7 @@ class TransactionRepository:
     def list_hirings_by_provider(provider: ProviderProfile) -> QuerySet:
         return (
             HiringTransaction.objects
-            .select_related('client', 'service__category', 'booking')
+            .select_related('client', 'registration__category', 'booking')
             .filter(provider=provider)
         )
 
@@ -73,7 +73,7 @@ class TransactionRepository:
             .select_related(
                 'client',
                 'provider__user',
-                'service__category',
+                'registration__category',
                 'booking',
             )
             .filter(

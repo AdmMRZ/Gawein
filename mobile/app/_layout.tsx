@@ -139,26 +139,6 @@ function RootNavigation() {
             presentation: 'modal',
           }}
         />
-        <Stack.Screen
-          name="service/create"
-          options={{
-            headerShown: true,
-            title: 'Buat Layanan Baru',
-            headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.textPrimary,
-            headerStyle: { backgroundColor: Colors.cream },
-          }}
-        />
-        <Stack.Screen
-          name="service/[id]"
-          options={{
-            headerShown: true,
-            title: 'Edit Layanan',
-            headerBackButtonDisplayMode: 'minimal',
-            headerTintColor: Colors.textPrimary,
-            headerStyle: { backgroundColor: Colors.cream },
-          }}
-        />
       </Stack>
       <StatusBar style="light" />
     </>

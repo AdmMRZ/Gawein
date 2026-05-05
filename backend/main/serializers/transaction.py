@@ -8,13 +8,13 @@ class HiringSerializer(serializers.ModelSerializer):
 
     client_email = serializers.CharField(source='client.email', read_only=True)
     provider_name = serializers.SerializerMethodField()
-    service_title = serializers.CharField(source='service.title', read_only=True)
+    category_name = serializers.CharField(source='registration.category.name', read_only=True)
 
     class Meta:
         model = HiringTransaction
         fields = [
             'id', 'client', 'client_email', 'provider', 'provider_name',
-            'service', 'service_title', 'booking',
+            'registration', 'category_name', 'booking',
             'agreed_price', 'work_date', 'location', 'notes',
             'status', 'created_at', 'updated_at',
         ]
@@ -47,10 +47,7 @@ class HiringDetailSerializer(serializers.ModelSerializer):
     client_email = serializers.CharField(source='client.email', read_only=True)
     client_name = serializers.SerializerMethodField()
     provider_name = serializers.SerializerMethodField()
-    service_title = serializers.CharField(source='service.title', read_only=True)
-    category_name = serializers.CharField(
-        source='service.category.name', read_only=True, default=None,
-    )
+    category_name = serializers.CharField(source='registration.category.name', read_only=True)
     has_review = serializers.SerializerMethodField()
 
     class Meta:
@@ -58,7 +55,7 @@ class HiringDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'client', 'client_email', 'client_name',
             'provider', 'provider_name',
-            'service', 'service_title', 'category_name',
+            'registration', 'category_name',
             'booking', 'agreed_price', 'work_date', 'location', 'notes',
             'status', 'has_review', 'created_at', 'updated_at',
         ]

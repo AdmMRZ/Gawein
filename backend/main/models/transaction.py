@@ -23,8 +23,8 @@ class HiringTransaction(models.Model):
         on_delete=models.CASCADE,
         related_name='hiring_transactions',
     )
-    service = models.ForeignKey(
-        'main.Service',
+    registration = models.ForeignKey(
+        'main.ProviderRegistration',
         on_delete=models.CASCADE,
         related_name='hiring_transactions',
     )

@@ -90,14 +90,14 @@ class SchedulingService:
         if user.role != 'client':
             raise PermissionDenied("Only clients can create bookings.")
 
-        service = data['service']
+        registration = data['registration']
         availability = data.get('availability')
-        provider = service.provider
+        provider = registration.user.provider_profile
 
-        # Validate availability belongs to the service's provider
+        # Validate availability belongs to the registration's provider
         if availability and availability.provider != provider:
             raise ValidationError(
-                "The selected availability does not belong to this service's provider."
+                "The selected availability does not belong to this provider."
             )
 
         # Check availability is still open
@@ -107,7 +107,7 @@ class SchedulingService:
         booking = SchedulingRepository.create_booking(
             client=user,
             provider=provider,
-            service=service,
+            registration=registration,
             availability=availability,
             notes=data.get('notes', ''),
         )

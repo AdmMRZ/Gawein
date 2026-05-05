@@ -38,7 +38,7 @@ export const schedulingService = {
   },
 
   async createBooking(data: {
-    service: number;
+    registration: number;
     availability?: number;
     notes?: string;
   }, options?: { idempotencyKey?: string }): Promise<Booking> {

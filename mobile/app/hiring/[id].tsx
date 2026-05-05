@@ -85,7 +85,7 @@ export default function HiringDetailScreen() {
         {/* -- ORDER DETAILS CARD -- */}
         <View style={{ backgroundColor: Colors.white, borderRadius: Radius.lg, borderWidth: 1, borderColor: Colors.grayLight, overflow: 'hidden' }}>
           <View style={{ backgroundColor: Colors.slate900, padding: Spacing.lg }}>
-            <Text style={{ color: Colors.white, fontWeight: FontWeight.bold, fontSize: FontSize.lg }}>{hiring.service_title}</Text>
+            <Text style={{ color: Colors.white, fontWeight: FontWeight.bold, fontSize: FontSize.lg }}>{hiring.category_name}</Text>
           </View>
           <View style={{ padding: Spacing.xl, gap: Spacing.lg }}>
             <DetailRow icon="person" label={isClient ? 'Penyedia Jasa' : 'Pemesan'} value={isClient ? hiring.provider_name : hiring.client_name} />

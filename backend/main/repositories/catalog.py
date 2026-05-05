@@ -1,6 +1,6 @@
 from django.db.models import QuerySet, Q, Avg
 
-from main.models import Category, Service, ProviderProfile
+from main.models import Category, ProviderProfile, ProviderRegistration
 
 
 class CatalogRepository:
@@ -34,39 +34,7 @@ class CatalogRepository:
     def delete_category(category: Category) -> None:
         category.delete()
 
-    # ── Service ─────────────────────────────────────────────
 
-    @staticmethod
-    def list_services_by_provider(provider: ProviderProfile) -> QuerySet:
-        return (
-            Service.objects
-            .select_related('category', 'provider__user')
-            .filter(provider=provider)
-        )
-
-    @staticmethod
-    def get_service_by_id(service_id: int) -> Service | None:
-        return (
-            Service.objects
-            .select_related('category', 'provider__user')
-            .filter(pk=service_id)
-            .first()
-        )
-
-    @staticmethod
-    def create_service(provider: ProviderProfile, **kwargs) -> Service:
-        return Service.objects.create(provider=provider, **kwargs)
-
-    @staticmethod
-    def update_service(service: Service, **kwargs) -> Service:
-        for key, value in kwargs.items():
-            setattr(service, key, value)
-        service.save()
-        return service
-
-    @staticmethod
-    def delete_service(service: Service) -> None:
-        service.delete()
 
     # ── Search ──────────────────────────────────────────────
 
@@ -74,7 +42,8 @@ class CatalogRepository:
     def search_providers(
         keyword: str | None = None,
         category: int | None = None,
-        city_id: int | None = None,
+        kota_id: str | None = None,
+        provinsi_id: str | None = None,
         min_price: float | None = None,
         max_price: float | None = None,
         gender: str | None = None,
@@ -86,43 +55,67 @@ class CatalogRepository:
         ordering: str | None = None,
     ) -> QuerySet:
         """
-        Complex search across providers and their services.
+        Search providers via ProviderRegistration (the Lapak).
         Returns ProviderProfile queryset filtered by multi-dimensional criteria.
+        Filters location against ProviderRegistration's Regional API fields.
         """
         qs = (
             ProviderProfile.objects
             .select_related('user')
-            .prefetch_related('services__category')
+            .prefetch_related('user__registrations')
             .distinct()
         )
 
-        # Filter by keyword (searches provider bio, service title/description, user name)
+        # Filter by keyword (searches provider bio, registration category, user name)
         if keyword:
+            reg_matches = ProviderRegistration.objects.filter(
+                Q(category__name__icontains=keyword)
+                | Q(pengalaman__icontains=keyword)
+                | Q(kota_name__icontains=keyword)
+            ).values_list('user_id', flat=True)
+
             qs = qs.filter(
                 Q(bio__icontains=keyword)
                 | Q(user__first_name__icontains=keyword)
                 | Q(user__last_name__icontains=keyword)
-                | Q(services__title__icontains=keyword)
-                | Q(services__description__icontains=keyword)
+                | Q(user_id__in=reg_matches)
             )
 
-        # Filter by service category
         if category:
-            qs = qs.filter(services__category_id=category)
+            reg_cat_users = ProviderRegistration.objects.filter(
+                category_id=category
+            ).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=reg_cat_users)
 
-        # Filter by provider location
-        if city_id:
-            qs = qs.filter(city_id=city_id)
+        # Filter by kota location (via ProviderRegistration.kota_id)
+        if kota_id:
+            reg_location_users = ProviderRegistration.objects.filter(
+                kota_id=str(kota_id)
+            ).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=reg_location_users)
 
-        # Filter by price range (on provider's services)
+        # Filter by provinsi location (via ProviderRegistration.provinsi_id)
+        if provinsi_id:
+            reg_prov_users = ProviderRegistration.objects.filter(
+                provinsi_id=str(provinsi_id)
+            ).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=reg_prov_users)
+
+        # Filter by price range (via ProviderRegistration.gaji_diharapkan)
         if min_price is not None:
-            qs = qs.filter(services__price__gte=min_price)
+            reg_price_users = ProviderRegistration.objects.filter(
+                gaji_diharapkan__gte=min_price
+            ).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=reg_price_users)
         if max_price is not None:
-            qs = qs.filter(services__price__lte=max_price)
+            reg_price_users = ProviderRegistration.objects.filter(
+                gaji_diharapkan__lte=max_price
+            ).values_list('user_id', flat=True)
+            qs = qs.filter(user_id__in=reg_price_users)
 
-        # Filter by provider attributes
+        # Filter by provider attributes (on ProviderProfile)
         if gender:
-            qs = qs.filter(gender=gender)
+            qs = qs.filter(user__gender=gender)
         if min_age is not None:
             qs = qs.filter(age__gte=min_age)
         if max_age is not None:
@@ -143,8 +136,6 @@ class CatalogRepository:
             allowed_orderings = {
                 'rating': 'rating_average',
                 '-rating': '-rating_average',
-                'price': 'services__price',
-                '-price': '-services__price',
                 'experience': 'years_of_experience',
                 '-experience': '-years_of_experience',
                 'newest': '-created_at',

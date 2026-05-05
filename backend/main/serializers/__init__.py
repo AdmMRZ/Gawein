@@ -12,9 +12,6 @@ from main.serializers.user import (
 )
 from main.serializers.catalog import (
     CategorySerializer,
-    ServiceSerializer,
-    ServiceDetailSerializer,
-    ServiceCreateUpdateSerializer,
 )
 from main.serializers.scheduling import (
     AvailabilitySerializer,

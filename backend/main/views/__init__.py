@@ -4,8 +4,6 @@ from main.views.catalog import CategoryListCreateView, CategoryDetailView
 from main.views.provider import (
     ProviderListView,
     ProviderDetailView,
-    MyServiceListCreateView,
-    MyServiceDetailView,
 )
 from main.views.search import ProviderSearchView
 from main.views.scheduling import (

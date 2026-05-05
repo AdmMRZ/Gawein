@@ -2,12 +2,10 @@ from django.urls import path
 
 from main.views.auth import RegisterView, LoginView, LogoutView, ChangePasswordView
 from main.views.user import ProfileView, PaymentCardListCreateView, PaymentCardDetailView
-from main.views.catalog import CategoryListCreateView, CategoryDetailView, CityListView
+from main.views.catalog import CategoryListCreateView, CategoryDetailView
 from main.views.provider import (
     ProviderListView,
     ProviderDetailView,
-    MyServiceListCreateView,
-    MyServiceDetailView,
     ProviderRegistrationCreateView,
 )
 from main.views.search import ProviderSearchView
@@ -44,15 +42,12 @@ urlpatterns = [
     path('payment-cards/<int:pk>/', PaymentCardDetailView.as_view(), name='payment-card-detail'),
 
     # ── Category ────────────────────────────────────────────
-    path('cities/', CityListView.as_view(), name='city-list'),
     path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
     path('categories/<int:pk>/', CategoryDetailView.as_view(), name='category-detail'),
 
     # ── Provider / Catalog ──────────────────────────────────
     path('providers/', ProviderListView.as_view(), name='provider-list'),
     path('providers/<int:pk>/', ProviderDetailView.as_view(), name='provider-detail'),
-    path('providers/services/', MyServiceListCreateView.as_view(), name='my-service-list-create'),
-    path('providers/services/<int:pk>/', MyServiceDetailView.as_view(), name='my-service-detail'),
     path('providers/registration/', ProviderRegistrationCreateView.as_view(), name='provider-registration'),
 
     # ── Search & Filter ─────────────────────────────────────

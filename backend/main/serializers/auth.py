@@ -17,7 +17,6 @@ class RegisterSerializer(serializers.Serializer):
     )
     # Optional profile fields
     phone = serializers.CharField(max_length=20, required=False, default='')
-    city_id = serializers.IntegerField(required=False, allow_null=True, default=None)
     bio = serializers.CharField(required=False, default='')
     gender = serializers.ChoiceField(
         choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')],

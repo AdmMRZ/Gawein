@@ -118,12 +118,7 @@ export default function RegisterCategoryScreen() {
         method: 'POST',
         body: {
           category_id: categoryId,
-          category_name: categoryName,
           foto_diri: imageUri || '',
-          nama_lengkap: nama,
-          nomor_telepon: noTelp,
-          gender: gender,
-          email: email,
           provinsi_id: selectedProv?.id || '',
           provinsi_name: selectedProv?.name || '',
           kota_id: selectedCity?.id || '',

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from main.models import User, ClientProfile, ProviderProfile, PaymentCard, ProviderRegistration
+from main.models import User, ClientProfile, ProviderProfile, PaymentCard, ProviderRegistration, Category
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -20,7 +20,7 @@ class ClientProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClientProfile
-        fields = ['id', 'city', 'created_at', 'updated_at']
+        fields = ['id', 'created_at', 'updated_at']
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
@@ -30,9 +30,10 @@ class ProviderProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProviderProfile
         fields = [
-            'id', 'bio', 'gender', 'age', 'city',
+            'id', 'bio', 'age',
             'years_of_experience', 'is_verified', 'verification_status',
             'rating_average', 'total_reviews',
+            'kota_id', 'kota_name', 'provinsi_name',
             'created_at', 'updated_at',
         ]
         read_only_fields = [
@@ -46,21 +47,21 @@ class ProviderProfileDetailSerializer(serializers.ModelSerializer):
     """Provider profile with user info and services for public listing."""
 
     user = UserSerializer(read_only=True)
-    services = serializers.SerializerMethodField()
+    registrations = serializers.SerializerMethodField()
 
     class Meta:
         model = ProviderProfile
         fields = [
-            'id', 'user', 'bio', 'gender', 'age', 'city',
+            'id', 'user', 'bio', 'age',
             'years_of_experience', 'is_verified', 'verification_status',
             'rating_average', 'total_reviews',
-            'services', 'created_at', 'updated_at',
+            'kota_id', 'kota_name', 'provinsi_name',
+            'registrations', 'created_at', 'updated_at',
         ]
 
-    def get_services(self, obj):
-        from main.serializers.catalog import ServiceSerializer
-        services = obj.services.filter(is_active=True)
-        return ServiceSerializer(services, many=True).data
+    def get_registrations(self, obj):
+        registrations = obj.user.registrations.all()
+        return ProviderRegistrationSerializer(registrations, many=True).data
 
 
 class ProfileSerializer(serializers.Serializer):
@@ -122,6 +123,12 @@ class PaymentCardSerializer(serializers.ModelSerializer):
         return value
 
 class ProviderRegistrationSerializer(serializers.ModelSerializer):
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=Category.objects.all(), source='category', write_only=True
+    )
+    category_name = serializers.CharField(source='category.name', read_only=True)
+    category = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = ProviderRegistration
         fields = '__all__'

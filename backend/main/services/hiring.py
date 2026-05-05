@@ -38,7 +38,7 @@ class HiringService:
         hiring = TransactionRepository.create_hiring(
             client=user,
             provider=booking.provider,
-            service=booking.service,
+            registration=booking.registration,
             booking=booking,
             agreed_price=data['agreed_price'],
             work_date=data['work_date'],
